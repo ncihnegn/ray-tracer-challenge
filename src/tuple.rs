@@ -16,15 +16,17 @@ pub(crate) struct Vector<T: Float> {
     z: T,
 }
 
-fn point<T: Float>(x: T, y: T, z: T) -> Point<T> {
-    Point::<T> { x, y, z }
-}
-
-fn vector<T: Float>(x: T, y: T, z: T) -> Vector<T> {
-    Vector::<T> { x, y, z }
+impl<T: Float> Point<T> {
+    fn new(x: T, y: T, z: T) -> Point<T> {
+        Point::<T> { x, y, z }
+    }
 }
 
 impl<T: Float> Vector<T> {
+    fn new(x: T, y: T, z: T) -> Vector<T> {
+        Vector::<T> { x, y, z }
+    }
+
     fn cross(self, rhs: Vector<T>) -> Vector<T> {
         Vector::<T> {
             x: self.y * rhs.z - self.z * rhs.y,
@@ -41,7 +43,7 @@ impl<T: Float> Vector<T> {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    fn normalize(self) -> Result<Vector<T>, String> {
+    fn normalize(self) -> Vector<T> {
         self / self.magnitude()
     }
 }
@@ -71,17 +73,13 @@ impl<T: Float> Add for Vector<T> {
 }
 
 impl<T: Float> Div<T> for Vector<T> {
-    type Output = Result<Vector<T>, String>;
+    type Output = Vector<T>;
 
     fn div(self, rhs: T) -> Self::Output {
-        if rhs == T::zero() {
-            Err("Divided by zero.".to_string())
-        } else {
-            Ok(Vector {
-                x: self.x / rhs,
-                y: self.y / rhs,
-                z: self.z / rhs,
-            })
+        Vector {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
         }
     }
 }
@@ -154,78 +152,81 @@ mod tests {
     #[test]
     fn add() {
         assert_eq!(
-            vector::<f32>(3., -2., 5.,) + vector::<f32>(-2., 3., 1.,),
-            vector::<f32>(1., 1., 6.,)
+            Vector::<f32>::new(3., -2., 5.,) + Vector::<f32>::new(-2., 3., 1.,),
+            Vector::<f32>::new(1., 1., 6.,)
         );
     }
 
     #[test]
     fn cross() {
         assert_eq!(
-            vector::<f32>(1., 2., 3.).cross(vector::<f32>(2., 3., 4.)),
-            vector::<f32>(-1., 2., -1.)
+            Vector::<f32>::new(1., 2., 3.).cross(Vector::<f32>::new(2., 3., 4.)),
+            Vector::<f32>::new(-1., 2., -1.)
         );
         assert_eq!(
-            vector::<f32>(2., 3., 4.).cross(vector::<f32>(1., 2., 3.)),
-            vector::<f32>(1., -2., 1.)
+            Vector::<f32>::new(2., 3., 4.).cross(Vector::<f32>::new(1., 2., 3.)),
+            Vector::<f32>::new(1., -2., 1.)
         );
     }
 
     #[test]
     fn div() {
         assert_eq!(
-            vector::<f32>(1., -2., 3.) / 2.,
-            Ok(vector::<f32>(0.5, -1., 1.5))
+            Vector::<f32>::new(1., -2., 3.) / 2.,
+            Vector::<f32>::new(0.5, -1., 1.5)
         );
     }
 
     #[test]
     fn dot() {
         assert_eq!(
-            vector::<f32>(1., 2., 3.).dot(vector::<f32>(2., 3., 4.)),
+            Vector::<f32>::new(1., 2., 3.).dot(Vector::<f32>::new(2., 3., 4.)),
             20.
         );
     }
 
     #[test]
     fn magnitude() {
-        assert_eq!(vector::<f32>(1., -2., 3.).magnitude(), (14.0 as f32).sqrt());
+        assert_eq!(
+            Vector::<f32>::new(1., -2., 3.).magnitude(),
+            (14.0 as f32).sqrt()
+        );
     }
 
     #[test]
     fn mul() {
         assert_eq!(
-            vector::<f32>(1., -2., 3.) * 3.5,
-            vector::<f32>(3.5, -7., 10.5)
+            Vector::<f32>::new(1., -2., 3.) * 3.5,
+            Vector::<f32>::new(3.5, -7., 10.5)
         );
     }
 
     #[test]
     fn neg() {
-        assert_eq!(-vector::<f32>(1., -2., 3.), vector::<f32>(-1., 2., -3.));
+        assert_eq!(
+            -Vector::<f32>::new(1., -2., 3.),
+            Vector::<f32>::new(-1., 2., -3.)
+        );
     }
 
     #[test]
     fn normalize() {
-        abs_diff_eq!(
-            vector::<f32>(1., -2., 3.).normalize().unwrap().magnitude(),
-            1.
-        );
+        abs_diff_eq!(Vector::<f32>::new(1., -2., 3.).normalize().magnitude(), 1.);
     }
 
     #[test]
     fn sub() {
         assert_eq!(
-            point::<f32>(3., 2., 1.) - point::<f32>(5., 6., 7.),
-            vector::<f32>(-2., -4., -6.)
+            Point::<f32>::new(3., 2., 1.) - Point::<f32>::new(5., 6., 7.),
+            Vector::<f32>::new(-2., -4., -6.)
         );
         assert_eq!(
-            point::<f32>(3., 2., 1.) - vector::<f32>(5., 6., 7.),
-            point::<f32>(-2., -4., -6.)
+            Point::<f32>::new(3., 2., 1.) - Vector::<f32>::new(5., 6., 7.),
+            Point::<f32>::new(-2., -4., -6.)
         );
         assert_eq!(
-            vector::<f32>(3., 2., 1.) - vector::<f32>(5., 6., 7.),
-            vector::<f32>(-2., -4., -6.)
+            Vector::<f32>::new(3., 2., 1.) - Vector::<f32>::new(5., 6., 7.),
+            Vector::<f32>::new(-2., -4., -6.)
         );
     }
 }
