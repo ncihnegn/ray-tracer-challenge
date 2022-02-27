@@ -4,9 +4,9 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct Color<T: Float> {
-    red: T,
-    green: T,
-    blue: T,
+    pub red: T,
+    pub green: T,
+    pub blue: T,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -24,7 +24,7 @@ pub(crate) struct Vector<T: Float> {
 }
 
 impl<T: Float> Color<T> {
-    fn new(red: T, green: T, blue: T) -> Color<T> {
+    pub fn new(red: T, green: T, blue: T) -> Color<T> {
         Color::<T> { red, green, blue }
     }
 }
@@ -106,6 +106,16 @@ impl<T: Float> Add for Vector<T> {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             z: self.z + rhs.z,
+        }
+    }
+}
+
+impl<T: Float> Default for Color<T> {
+    fn default() -> Color<T> {
+        Color::<T> {
+            red: T::zero(),
+            green: T::zero(),
+            blue: T::zero(),
         }
     }
 }
