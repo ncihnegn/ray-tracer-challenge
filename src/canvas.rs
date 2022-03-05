@@ -1,5 +1,5 @@
+use cgmath::BaseFloat;
 use num_traits::cast;
-use num_traits::Float;
 use rgb::RGB;
 use std::fmt::Display;
 use std::vec::Vec;
@@ -10,7 +10,7 @@ struct Canvas<T> {
     pixels: Vec<Vec<T>>,
 }
 
-impl<T: Float + Default + Display> Canvas<RGB<T>> {
+impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
     fn new(width: usize, height: usize) -> Canvas<RGB<T>> {
         Canvas::<RGB<T>> {
             width,
