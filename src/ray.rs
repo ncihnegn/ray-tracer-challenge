@@ -1,3 +1,4 @@
+use crate::intersection::Intersection;
 use cgmath::{
     BaseFloat, ElementWise, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Transform3,
     Vector3,
@@ -43,10 +44,14 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    fn intersect(&self, transform: Matrix4<T>) -> Option<Vec<T>> {
-        transform
-            .invert()
-            .map(|m| self.transform(m).intersect_unit())
+    fn intersect(&self, transform: Matrix4<T>) -> Option<Vec<Intersection<T>>> {
+        transform.invert().map(|m| {
+            self.transform(m)
+                .intersect_unit()
+                .iter()
+                .map(|&t| Intersection::<T> { transform, t })
+                .collect()
+        })
     }
 }
 
@@ -142,14 +147,19 @@ mod tests {
 
     #[test]
     fn intersect() {
+        let transform = Matrix4::<f32>::from_scale(2.);
         assert_eq!(
             Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::new(0., 0., 1.),)
-                .intersect(Matrix4::<f32>::from_scale(2.)),
-            Some(vec![3., 7.])
+                .intersect(transform),
+            Some(vec![
+                Intersection::<f32>::new(transform, 3.),
+                Intersection::<f32>::new(transform, 7.)
+            ])
         );
+        let translation = Matrix4::<f32>::from_translation(Vector3::new(5., 0., 0.));
         assert_eq!(
             Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::new(0., 0., 1.),)
-                .intersect(Matrix4::<f32>::from_translation(Vector3::new(5., 0., 0.))),
+                .intersect(translation),
             Some(vec![])
         );
     }
