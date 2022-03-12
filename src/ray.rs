@@ -1,8 +1,5 @@
 use crate::intersection::Intersection;
-use cgmath::{
-    BaseFloat, ElementWise, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Transform3,
-    Vector3,
-};
+use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Ray<T> {
@@ -24,12 +21,10 @@ impl<T: BaseFloat> Ray<T> {
     fn intersect_unit(&self) -> Vec<T> {
         let sphere_to_ray = self.origin.to_vec();
         let a = self.direction.dot(self.direction);
-        let one = T::one();
-        let two = one + one;
+        let two = T::from(2).unwrap();
         let b = self.direction.dot(sphere_to_ray) * two;
-        let c = sphere_to_ray.dot(sphere_to_ray) - one;
-        let four = two + two;
-        let discriminant = b * b - four * a * c;
+        let c = sphere_to_ray.dot(sphere_to_ray) - T::one();
+        let discriminant = b * b - T::from(4).unwrap() * a * c;
         match discriminant {
             d if d > T::zero() => vec![(-b - d.sqrt()) / (two * a), (-b + d.sqrt()) / (two * a)],
             d if d == T::zero() => vec![-b / (two * a)],
@@ -61,28 +56,16 @@ mod tests {
     #[test]
     fn position() {
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(2., 3., 4.),
-                Vector3::<f32>::new(1., 0., 0.)
-            )
-            .position(0.),
-            Point3::<f32>::new(2., 3., 4.)
+            Ray::new(Point3::new(2., 3., 4.), Vector3::unit_x()).position(0.),
+            Point3::new(2., 3., 4.)
         );
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(2., 3., 4.),
-                Vector3::<f32>::new(1., 0., 0.)
-            )
-            .position(-1.),
-            Point3::<f32>::new(1., 3., 4.)
+            Ray::new(Point3::new(2., 3., 4.), Vector3::unit_x()).position(-1.),
+            Point3::new(1., 3., 4.)
         );
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(2., 3., 4.),
-                Vector3::<f32>::new(1., 0., 0.)
-            )
-            .position(2.5),
-            Point3::<f32>::new(4.5, 3., 4.)
+            Ray::new(Point3::new(2., 3., 4.), Vector3::unit_x()).position(2.5),
+            Point3::new(4.5, 3., 4.)
         );
     }
 
@@ -90,43 +73,32 @@ mod tests {
     fn intersect_unit() {
         // A ray intersecs the sphere at two points
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(0., 0., -5.),
-                Vector3::<f32>::new(0., 0., 1.),
-            )
-            .intersect_unit(),
+            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())
+                .intersect_unit(),
             vec![4., 6.]
         );
         // A ray intersecs the sphere at a tangent.
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(0., 1., -5.),
-                Vector3::<f32>::new(0., 0., 1.),
-            )
-            .intersect_unit(),
+            Ray::new(Point3::new(0., 1., -5.), Vector3::unit_z())
+                .intersect_unit(),
             vec![5.]
         );
         // A ray misses the sphere.
-        assert!(Ray::<f32>::new(
-            Point3::<f32>::new(0., 2., -5.),
-            Vector3::<f32>::new(0., 0., 1.),
-        )
-        .intersect_unit()
-        .is_empty());
+        assert!(
+            Ray::new(Point3::new(0., 2., -5.), Vector3::unit_z())
+                .intersect_unit()
+                .is_empty()
+        );
 
         // A ray originates inside the sphere.
         assert_eq!(
-            Ray::<f32>::new(Point3::<f32>::origin(), Vector3::<f32>::new(0., 0., 1.),)
-                .intersect_unit(),
+            Ray::<f32>::new(Point3::origin(), Vector3::unit_z(),).intersect_unit(),
             vec![-1., 1.]
         );
         // A ray is in front of the sphere.
         assert_eq!(
-            Ray::<f32>::new(
-                Point3::<f32>::new(0., 0., 5.),
-                Vector3::<f32>::new(0., 0., 1.),
-            )
-            .intersect_unit(),
+            Ray::new(Point3::new(0., 0., 5.), Vector3::unit_z())
+                .intersect_unit(),
             vec![-6., -4.]
         );
     }
@@ -134,12 +106,12 @@ mod tests {
     #[test]
     fn transform() {
         assert_eq!(
-            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::new(0., 1., 0.),)
+            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
                 .transform(Matrix4::from_translation(Vector3::new(3., 4., 5.))),
-            Ray::<f32>::new(Point3::new(4., 6., 8.), Vector3::new(0., 1., 0.),)
+            Ray::<f32>::new(Point3::new(4., 6., 8.), Vector3::unit_y(),)
         );
         assert_eq!(
-            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::new(0., 1., 0.),)
+            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
                 .transform(Matrix4::from_nonuniform_scale(2., 3., 4.)),
             Ray::<f32>::new(Point3::new(2., 6., 12.), Vector3::new(0., 3., 0.),)
         );
@@ -147,19 +119,17 @@ mod tests {
 
     #[test]
     fn intersect() {
-        let transform = Matrix4::<f32>::from_scale(2.);
+        let transform = Matrix4::from_scale(2.);
         assert_eq!(
-            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::new(0., 0., 1.),)
-                .intersect(transform),
+            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(transform),
             Some(vec![
-                Intersection::<f32>::new(transform, 3.),
-                Intersection::<f32>::new(transform, 7.)
+                Intersection::new(transform, 3.),
+                Intersection::new(transform, 7.)
             ])
         );
-        let translation = Matrix4::<f32>::from_translation(Vector3::new(5., 0., 0.));
+        let translation = Matrix4::from_translation(Vector3::new(5., 0., 0.));
         assert_eq!(
-            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::new(0., 0., 1.),)
-                .intersect(translation),
+            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(translation),
             Some(vec![])
         );
     }

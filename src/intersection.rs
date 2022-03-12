@@ -25,23 +25,23 @@ mod tests {
 
     #[test]
     fn hit() {
-        let sphere = Matrix4::<f32>::from_scale(1.);
+        let sphere = Matrix4::from_scale(1.);
         // All have positive t
-        let i1 = Intersection::<f32>::new(sphere, 1.);
+        let i1 = Intersection::new(sphere, 1.);
         assert_eq!(
-            super::hit(vec![i1.clone(), Intersection::<f32>::new(sphere, 2.)]),
+            super::hit(vec![i1.clone(), Intersection::new(sphere, 2.)]),
             Some(i1.clone())
         );
         // Some have negative t
         assert_eq!(
-            super::hit(vec![Intersection::<f32>::new(sphere, -1.), i1.clone()]),
+            super::hit(vec![Intersection::new(sphere, -1.), i1.clone()]),
             Some(i1)
         );
         // All have negative t
         assert_eq!(
             super::hit(vec![
-                Intersection::<f32>::new(sphere, -2.),
-                Intersection::<f32>::new(sphere, -1.)
+                Intersection::new(sphere, -2.),
+                Intersection::new(sphere, -1.)
             ]),
             None
         );

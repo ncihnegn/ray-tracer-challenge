@@ -15,7 +15,7 @@ impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
         Canvas::<RGB<T>> {
             width,
             height,
-            pixels: vec![vec!(RGB::<T>::default(); width); height],
+            pixels: vec![vec!(RGB::default(); width); height],
         }
     }
 
@@ -60,21 +60,21 @@ mod tests {
 
     #[test]
     fn new() {
-        let mut canvas = Canvas::<RGB<f32>>::new(10, 20);
+        let mut canvas = Canvas::new(10, 20);
         assert_eq!(canvas.width, 10);
         assert_eq!(canvas.height, 20);
-        assert_eq!(canvas.pixels[0][0], RGB::<f32>::default());
-        let r = RGB::<f32>::new(1., 0., 0.);
+        assert_eq!(canvas.pixels[0][0], RGB::default());
+        let r = RGB::new(1., 0., 0.);
         canvas.write_pixel(2, 3, r);
         assert_eq!(canvas.pixels[3][2], r);
     }
 
     #[test]
     fn to_ppm() {
-        let mut canvas = Canvas::<RGB<f32>>::new(5, 3);
-        canvas.write_pixel(0, 0, RGB::<f32>::new(1.5, 0., 0.));
-        canvas.write_pixel(2, 1, RGB::<f32>::new(0., 0.5, 0.));
-        canvas.write_pixel(4, 2, RGB::<f32>::new(-0.5, 0., 1.));
+        let mut canvas = Canvas::new(5, 3);
+        canvas.write_pixel(0, 0, RGB::new(1.5, 0., 0.));
+        canvas.write_pixel(2, 1, RGB::new(0., 0.5, 0.));
+        canvas.write_pixel(4, 2, RGB::new(-0.5, 0., 1.));
         assert_eq!(
             canvas.to_ppm(),
             r"P3
@@ -89,8 +89,8 @@ mod tests {
 
     #[test]
     fn to_ppm_long_lines() {
-        let mut canvas = Canvas::<RGB<f32>>::new(10, 2);
-        canvas.pixels.fill(vec![RGB::<f32>::new(1., 0.8, 0.6); 10]);
+        let mut canvas = Canvas::new(10, 2);
+        canvas.pixels.fill(vec![RGB::new(1., 0.8, 0.6); 10]);
         assert_eq!(
             canvas.to_ppm(),
             r"P3
