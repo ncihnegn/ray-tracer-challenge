@@ -73,22 +73,18 @@ mod tests {
     fn intersect_unit() {
         // A ray intersecs the sphere at two points
         assert_eq!(
-            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())
-                .intersect_unit(),
+            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z()).intersect_unit(),
             vec![4., 6.]
         );
         // A ray intersecs the sphere at a tangent.
         assert_eq!(
-            Ray::new(Point3::new(0., 1., -5.), Vector3::unit_z())
-                .intersect_unit(),
+            Ray::new(Point3::new(0., 1., -5.), Vector3::unit_z()).intersect_unit(),
             vec![5.]
         );
         // A ray misses the sphere.
-        assert!(
-            Ray::new(Point3::new(0., 2., -5.), Vector3::unit_z())
-                .intersect_unit()
-                .is_empty()
-        );
+        assert!(Ray::new(Point3::new(0., 2., -5.), Vector3::unit_z())
+            .intersect_unit()
+            .is_empty());
 
         // A ray originates inside the sphere.
         assert_eq!(
@@ -97,8 +93,7 @@ mod tests {
         );
         // A ray is in front of the sphere.
         assert_eq!(
-            Ray::new(Point3::new(0., 0., 5.), Vector3::unit_z())
-                .intersect_unit(),
+            Ray::new(Point3::new(0., 0., 5.), Vector3::unit_z()).intersect_unit(),
             vec![-6., -4.]
         );
     }
