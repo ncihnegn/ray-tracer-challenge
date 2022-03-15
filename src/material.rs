@@ -1,19 +1,20 @@
 use crate::light::Light;
 use crate::sphere::reflect;
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
+use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Debug, PartialEq)]
-pub(crate) struct Material<T> {
-    color: RGB<T>,
-    ambient: T,
-    diffuse: T,
-    specular: T,
-    shininess: T,
+#[derive(Constructor, Clone, Debug, PartialEq)]
+pub struct Material<T> {
+    pub color: RGB<T>,
+    pub ambient: T,
+    pub diffuse: T,
+    pub specular: T,
+    pub shininess: T,
 }
 
-impl<T: BaseFloat + Default> Material<T> {
-    pub fn defaults() -> Material<T> {
+impl<T: BaseFloat + Default> Default for Material<T> {
+    fn default() -> Material<T> {
         Material::<T> {
             color: RGB::new(T::one(), T::one(), T::one()),
             ambient: T::from(0.1).unwrap(),
@@ -22,7 +23,9 @@ impl<T: BaseFloat + Default> Material<T> {
             shininess: T::from(200.).unwrap(),
         }
     }
+}
 
+impl<T: BaseFloat + Default> Material<T> {
     pub fn lighting(
         &self,
         light: Light<T>,
@@ -51,12 +54,12 @@ impl<T: BaseFloat + Default> Material<T> {
 
 mod tests {
     use super::*;
-    use cgmath::{assert_relative_eq, EuclideanSpace};
+    use cgmath::EuclideanSpace;
 
     #[test]
     fn lighting() {
         assert_eq!(
-            Material::defaults().lighting(
+            Material::default().lighting(
                 Light::new(Point3::new(0., 0., -10.), RGB::new(1., 1., 1.)),
                 Point3::origin(),
                 -Vector3::unit_z(),

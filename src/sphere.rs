@@ -1,6 +1,14 @@
+use crate::material::Material;
 use cgmath::{BaseFloat, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3};
+use derive_more::Constructor;
 
-fn normal_at<T: BaseFloat>(s: Matrix4<T>, p: Point3<T>) -> Option<Vector3<T>> {
+#[derive(Constructor, Clone, Debug, PartialEq)]
+pub struct Sphere<T> {
+    pub transform: Matrix4<T>,
+    pub material: Material<T>,
+}
+
+pub fn normal_at<T: BaseFloat>(s: Matrix4<T>, p: Point3<T>) -> Option<Vector3<T>> {
     s.invert().map(|m| {
         let object_point = m * p.to_homogeneous();
         (m.transpose() * object_point).truncate().normalize()
@@ -14,7 +22,7 @@ pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
 mod tests {
     use super::*;
     use cgmath::{assert_relative_eq, Rad};
-    use std::f32::consts;
+    use std::f32::consts::{FRAC_1_SQRT_2, PI};
 
     #[test]
     fn normal() {
@@ -48,7 +56,7 @@ mod tests {
         assert_relative_eq!(
             normal_at(
                 Matrix4::from_nonuniform_scale(1., 0.5, 1.)
-                    * Matrix4::from_axis_angle(Vector3::unit_z(), Rad(consts::PI / 5.)),
+                    * Matrix4::from_axis_angle(Vector3::unit_z(), Rad(PI / 5.)),
                 Point3::new(0., t, -t)
             )
             .unwrap(),
@@ -63,9 +71,11 @@ mod tests {
             reflect(Vector3::new(1., -1., 0.), Vector3::unit_y()),
             Vector3::new(1., 1., 0.)
         );
-        let isqrt2 = 2.0_f32.sqrt().recip();
         assert_relative_eq!(
-            reflect(Vector3::new(0., -1., 0.), Vector3::new(isqrt2, isqrt2, 0.)),
+            reflect(
+                Vector3::new(0., -1., 0.),
+                Vector3::new(FRAC_1_SQRT_2, FRAC_1_SQRT_2, 0.)
+            ),
             Vector3::unit_x()
         );
     }

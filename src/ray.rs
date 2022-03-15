@@ -1,19 +1,18 @@
 use crate::intersection::Intersection;
+use crate::material::Material;
+use crate::sphere::Sphere;
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
+use derive_more::Constructor;
 
-#[derive(Debug, PartialEq)]
-pub(crate) struct Ray<T> {
+#[derive(Constructor, Debug, PartialEq)]
+pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vector3<T>,
 }
 
 impl<T: BaseFloat> Ray<T> {
-    pub fn new(origin: Point3<T>, direction: Vector3<T>) -> Ray<T> {
-        Ray::<T> { origin, direction }
-    }
-
     // Find the position after time.
-    fn position(&self, time: T) -> Point3<T> {
+    pub fn position(&self, time: T) -> Point3<T> {
         self.origin + self.direction * time
     }
 
@@ -39,14 +38,16 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    fn intersect(&self, transform: Matrix4<T>) -> Option<Vec<Intersection<T>>> {
-        transform.invert().map(|m| {
-            self.transform(m)
+    pub fn intersect(&self, object: &Sphere<T>) -> Vec<Intersection<T>> {
+        if let Some(t) = object.transform.invert() {
+            self.transform(t)
                 .intersect_unit()
                 .iter()
-                .map(|&t| Intersection::<T> { transform, t })
+                .map(|&t| Intersection::new(t, object.clone()))
                 .collect()
-        })
+        } else {
+            Vec::new()
+        }
     }
 }
 
@@ -101,31 +102,36 @@ mod tests {
     #[test]
     fn transform() {
         assert_eq!(
-            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
+            Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
                 .transform(Matrix4::from_translation(Vector3::new(3., 4., 5.))),
-            Ray::<f32>::new(Point3::new(4., 6., 8.), Vector3::unit_y(),)
+            Ray::new(Point3::new(4., 6., 8.), Vector3::unit_y(),)
         );
         assert_eq!(
-            Ray::<f32>::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
+            Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
                 .transform(Matrix4::from_nonuniform_scale(2., 3., 4.)),
-            Ray::<f32>::new(Point3::new(2., 6., 12.), Vector3::new(0., 3., 0.),)
+            Ray::new(Point3::new(2., 6., 12.), Vector3::new(0., 3., 0.),)
         );
     }
 
     #[test]
     fn intersect() {
-        let transform = Matrix4::from_scale(2.);
-        assert_eq!(
-            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(transform),
-            Some(vec![
-                Intersection::new(transform, 3.),
-                Intersection::new(transform, 7.)
-            ])
-        );
-        let translation = Matrix4::from_translation(Vector3::new(5., 0., 0.));
-        assert_eq!(
-            Ray::<f32>::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(translation),
-            Some(vec![])
-        );
+        {
+            let object = Sphere::new(Matrix4::from_scale(2.), Material::default());
+            assert_eq!(
+                Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&object),
+                vec![
+                    Intersection::new(3., object.clone()),
+                    Intersection::new(7., object)
+                ]
+            );
+        }
+        {
+            let translation = Matrix4::from_translation(Vector3::new(5., 0., 0.));
+            let object = Sphere::new(translation, Material::default());
+            assert_eq!(
+                Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&object),
+                vec![]
+            );
+        }
     }
 }

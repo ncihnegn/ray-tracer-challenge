@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+approx = "*"
 cgmath = "*"
+derive_more = "*"
 num-traits = "*"
-rgb = "*"
+rgb = { git = "https://github.com/ncihnegn/rust-rgb", branch = "approx" }
