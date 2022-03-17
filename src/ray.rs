@@ -1,7 +1,10 @@
+use crate::impl_approx;
 use crate::intersection::Intersection;
-use crate::material::Material;
 use crate::sphere::Sphere;
-use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
+use cgmath::{
+    AbsDiffEq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, RelativeEq, SquareMatrix,
+    UlpsEq, Vector3,
+};
 use derive_more::Constructor;
 
 #[derive(Constructor, Debug, PartialEq)]
@@ -9,6 +12,8 @@ pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vector3<T>,
 }
+
+impl_approx!(Ray=> Point3<T> Vector3<T> => origin direction);
 
 impl<T: BaseFloat> Ray<T> {
     // Find the position after time.
@@ -53,6 +58,7 @@ impl<T: BaseFloat> Ray<T> {
 
 mod tests {
     use super::*;
+    use crate::material::Material;
 
     #[test]
     fn position() {

@@ -4,14 +4,14 @@ use rgb::RGB;
 use std::fmt::Display;
 use std::vec::Vec;
 
-struct Canvas<T> {
-    width: usize,
-    height: usize,
-    pixels: Vec<Vec<T>>,
+pub struct Canvas<T> {
+    pub width: usize,
+    pub height: usize,
+    pub pixels: Vec<Vec<T>>,
 }
 
 impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
-    fn new(width: usize, height: usize) -> Canvas<RGB<T>> {
+    pub fn new(width: usize, height: usize) -> Canvas<RGB<T>> {
         Canvas::<RGB<T>> {
             width,
             height,

@@ -4,7 +4,7 @@ use crate::light::Light;
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3};
+use cgmath::{BaseFloat, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
 
@@ -62,7 +62,7 @@ impl<T: BaseFloat + Default> World<T> {
             .collect()
     }
 
-    fn color_at(&self, ray: &Ray<T>) -> RGB<T> {
+    pub fn color_at(&self, ray: &Ray<T>) -> RGB<T> {
         if let Some(i) = hit(self.intersect(ray)) {
             self.shade_hit(i.precompute(ray)).unwrap()
         } else {
@@ -74,7 +74,7 @@ impl<T: BaseFloat + Default> World<T> {
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
-    use cgmath::Vector3;
+    use cgmath::{EuclideanSpace, Vector3};
 
     #[test]
     fn shade_hit() {
