@@ -36,7 +36,7 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    fn transform(&self, transform: Matrix4<T>) -> Ray<T> {
+    fn transform(&self, transform: &Matrix4<T>) -> Ray<T> {
         Ray::<T> {
             origin: Point3::from_homogeneous(transform * self.origin.to_homogeneous()),
             direction: (transform * self.direction.extend(T::zero())).truncate(),
@@ -45,7 +45,7 @@ impl<T: BaseFloat> Ray<T> {
 
     pub fn intersect(&self, object: &Sphere<T>) -> Vec<Intersection<T>> {
         if let Some(t) = object.transform.invert() {
-            self.transform(t)
+            self.transform(&t)
                 .intersect_unit()
                 .iter()
                 .map(|&t| Intersection::new(t, object.clone()))
@@ -109,12 +109,12 @@ mod tests {
     fn transform() {
         assert_eq!(
             Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
-                .transform(Matrix4::from_translation(Vector3::new(3., 4., 5.))),
+                .transform(&Matrix4::from_translation(Vector3::new(3., 4., 5.))),
             Ray::new(Point3::new(4., 6., 8.), Vector3::unit_y(),)
         );
         assert_eq!(
             Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
-                .transform(Matrix4::from_nonuniform_scale(2., 3., 4.)),
+                .transform(&Matrix4::from_nonuniform_scale(2., 3., 4.)),
             Ray::new(Point3::new(2., 6., 12.), Vector3::new(0., 3., 0.),)
         );
     }
@@ -131,13 +131,12 @@ mod tests {
                 ]
             );
         }
-        {
-            let translation = Matrix4::from_translation(Vector3::new(5., 0., 0.));
-            let object = Sphere::new(translation, Material::default());
-            assert_eq!(
-                Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&object),
-                vec![]
-            );
-        }
+        assert_eq!(
+            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&Sphere::new(
+                Matrix4::from_translation(Vector3::new(5., 0., 0.)),
+                Material::default()
+            )),
+            vec![]
+        );
     }
 }

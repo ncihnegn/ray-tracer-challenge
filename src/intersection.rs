@@ -28,7 +28,7 @@ impl<T: BaseFloat> Intersection<T> {
     }
 }
 
-pub fn hit<T: BaseFloat>(v: Vec<Intersection<T>>) -> Option<Intersection<T>> {
+pub fn hit<T: BaseFloat>(v: &Vec<Intersection<T>>) -> Option<Intersection<T>> {
     v.iter()
         .filter(|i| i.t >= T::zero())
         .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
@@ -45,20 +45,20 @@ mod tests {
             // All have positive t
             let i1 = Intersection::new(1., sphere.clone());
             assert_eq!(
-                super::hit(vec![i1.clone(), Intersection::new(2., sphere.clone())]),
+                super::hit(&vec![i1.clone(), Intersection::new(2., sphere.clone())]),
                 Some(i1.clone())
             );
             // Some have negative t
             assert_eq!(
-                super::hit(vec![Intersection::new(-1., sphere.clone()), i1.clone()]),
+                super::hit(&vec![Intersection::new(-1., sphere.clone()), i1.clone()]),
                 Some(i1)
             );
         }
         // All have negative t
         assert_eq!(
-            super::hit(vec![
+            super::hit(&vec![
                 Intersection::new(-2., sphere.clone()),
-                Intersection::new(-1., sphere.clone())
+                Intersection::new(-1., sphere)
             ]),
             None
         );
@@ -66,9 +66,9 @@ mod tests {
 
     fn precompute() {
         let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
-        let ray = Ray::new(Point3::origin(), Vector3::unit_z());
         assert_eq!(
-            Intersection::new(1., object.clone()).precompute(&ray),
+            Intersection::new(1., object.clone())
+                .precompute(&Ray::new(Point3::origin(), Vector3::unit_z())),
             Computation::new(
                 object,
                 1.,
