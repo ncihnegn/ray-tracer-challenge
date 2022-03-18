@@ -4,7 +4,7 @@ use crate::light::Light;
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use cgmath::{BaseFloat, Matrix4, Point3};
+use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
 
@@ -20,7 +20,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
         let one = T::one();
         World::<T> {
             light: Some(Light::new(
-                Point3::new(neg10, neg10, neg10),
+                Point3::new(neg10, T::from(10).unwrap(), neg10),
                 RGB::new(one, one, one),
             )),
             objects: vec![
@@ -49,7 +49,8 @@ impl<T: BaseFloat + Default> World<T> {
             comps
                 .object
                 .material
-                .lighting(light, comps.point, comps.eyev, comps.normalv)
+                .lighting(light, comps.point, comps.eyev, comps.normalv,
+                self.is_shadowed(&comps.over_point()))
         })
     }
 
@@ -68,6 +69,16 @@ impl<T: BaseFloat + Default> World<T> {
         } else {
             RGB::default()
         }
+    }
+
+    fn is_shadowed(&self, point: &Point3<T>) -> bool {
+        let v = self.light.unwrap().position - point;
+        let distance = v.magnitude();
+        let direction = v.normalize();
+        let r = Ray::new(point.clone(), direction);
+        let intersections = self.intersect(&r);
+        let h = hit(&intersections);
+        h.is_some() && h.unwrap().t < distance
     }
 }
 
@@ -125,5 +136,13 @@ mod tests {
                 w.objects[1].material.color
             );
         }
+    }
+
+    #[test]
+    fn is_shadowed() {
+        let w = World::default();
+        assert!(!w.is_shadowed(&Point3::new(0.,10.,0.)));
+        assert!(w.is_shadowed(&Point3::new(10.,-10.,10.)));
+        assert!(!w.is_shadowed(&Point3::new(-20.,20.,-20.)));
     }
 }

@@ -15,14 +15,15 @@ impl<T: BaseFloat> Intersection<T> {
     pub fn precompute(&self, ray: &Ray<T>) -> Computation<T> {
         let point = ray.position(self.t);
         let eyev = -ray.direction;
-        let normalv = normal_at(self.object.transform, point).unwrap();
-        let inside = dot(normalv, eyev) < T::zero();
+        let t_normalv = normal_at(self.object.transform, point).unwrap();
+        let inside = dot(t_normalv, eyev) < T::zero();
+        let normalv = if inside { -t_normalv } else { t_normalv };
         Computation::new(
             self.object.clone(),
             self.t,
             point,
             eyev,
-            if inside { -normalv } else { normalv },
+            normalv,
             inside,
         )
     }
@@ -37,6 +38,7 @@ pub fn hit<T: BaseFloat>(v: &Vec<Intersection<T>>) -> Option<Intersection<T>> {
 
 mod tests {
     use super::*;
+    use num_traits::Float;
 
     #[test]
     fn hit() {
@@ -66,17 +68,12 @@ mod tests {
 
     fn precompute() {
         let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
+        let point = Point3::<f32>::new(0., 0., -1.);
+        let v = -Vector3::<f32>::unit_z();
         assert_eq!(
             Intersection::new(1., object.clone())
                 .precompute(&Ray::new(Point3::origin(), Vector3::unit_z())),
-            Computation::new(
-                object,
-                1.,
-                Point3::new(0., 0., -1.),
-                -Vector3::unit_z(),
-                -Vector3::unit_z(),
-                true,
-            )
+            Computation::new(object, 1., point, v, v, true)
         );
     }
 }
