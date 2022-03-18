@@ -3,7 +3,7 @@ use crate::intersection::{hit, Intersection};
 use crate::light::Light;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::sphere::Sphere;
+use crate::shape::Shape;
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
@@ -11,7 +11,7 @@ use rgb::RGB;
 #[derive(Constructor)]
 pub struct World<T> {
     light: Light<T>,
-    objects: Vec<Sphere<T>>,
+    objects: Vec<Shape<T>>,
 }
 
 impl<T: BaseFloat + Default> Default for World<T> {
@@ -24,7 +24,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                 RGB::new(one, one, one),
             ),
             objects: vec![
-                Sphere::new(
+                Shape::new(
                     Matrix4::from_scale(one),
                     Material::new(
                         RGB::new(T::from(0.8).unwrap(), T::one(), T::from(0.6).unwrap()),
@@ -34,7 +34,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                         T::from(200).unwrap(),
                     ),
                 ),
-                Sphere::new(
+                Shape::new(
                     Matrix4::from_scale(T::from(0.5).unwrap()),
                     Material::default(),
                 ),
@@ -46,10 +46,10 @@ impl<T: BaseFloat + Default> Default for World<T> {
 impl<T: BaseFloat + Default> World<T> {
     fn shade_hit(&self, comps: &Computation<T>) -> RGB<T> {
         comps.object.material.lighting(
-            self.light,
-            comps.point,
-            comps.eyev,
-            comps.normalv,
+            &self.light,
+            &comps.point,
+            &comps.eyev,
+            &comps.normalv,
             self.is_shadowed(&comps.over_point()),
         )
     }
@@ -75,8 +75,7 @@ impl<T: BaseFloat + Default> World<T> {
         let v = self.light.position - point;
         let distance = v.magnitude();
         let direction = v.normalize();
-        let r = Ray::new(point.clone(), direction);
-        let intersections = self.intersect(&r);
+        let intersections = self.intersect(&Ray::new(point.clone(), direction));
         let h = hit(&intersections);
         h.is_some() && h.unwrap().t < distance
     }

@@ -5,7 +5,7 @@ mod intersection;
 mod light;
 mod material;
 mod ray;
-mod sphere;
+mod shape;
 mod world;
 
 #[macro_export]

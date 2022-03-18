@@ -7,7 +7,7 @@ use std::vec::Vec;
 pub struct Canvas<T> {
     pub width: usize,
     pub height: usize,
-    pub pixels: Vec<Vec<T>>,
+    pub pixels: Vec<Vec<T>>, // column-major
 }
 
 impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
@@ -17,10 +17,6 @@ impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
             height,
             pixels: vec![vec!(RGB::default(); width); height],
         }
-    }
-
-    fn write_pixel(&mut self, y: usize, x: usize, c: RGB<T>) {
-        self.pixels[x][y] = c
     }
 
     fn to_ppm(&self) -> String {
@@ -65,16 +61,16 @@ mod tests {
         assert_eq!(canvas.height, 20);
         assert_eq!(canvas.pixels[0][0], RGB::default());
         let r = RGB::new(1., 0., 0.);
-        canvas.write_pixel(2, 3, r);
+        canvas.pixels[3][2] = r;
         assert_eq!(canvas.pixels[3][2], r);
     }
 
     #[test]
     fn to_ppm() {
         let mut canvas = Canvas::new(5, 3);
-        canvas.write_pixel(0, 0, RGB::new(1.5, 0., 0.));
-        canvas.write_pixel(2, 1, RGB::new(0., 0.5, 0.));
-        canvas.write_pixel(4, 2, RGB::new(-0.5, 0., 1.));
+        canvas.pixels[0][0] = RGB::new(1.5, 0., 0.);
+        canvas.pixels[1][2] = RGB::new(0., 0.5, 0.);
+        canvas.pixels[2][4] = RGB::new(-0.5, 0., 1.);
         assert_eq!(
             canvas.to_ppm(),
             r"P3
