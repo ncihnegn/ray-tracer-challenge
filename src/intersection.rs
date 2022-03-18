@@ -18,14 +18,7 @@ impl<T: BaseFloat> Intersection<T> {
         let t_normalv = normal_at(self.object.transform, point).unwrap();
         let inside = dot(t_normalv, eyev) < T::zero();
         let normalv = if inside { -t_normalv } else { t_normalv };
-        Computation::new(
-            self.object.clone(),
-            self.t,
-            point,
-            eyev,
-            normalv,
-            inside,
-        )
+        Computation::new(self.object.clone(), self.t, point, eyev, normalv, inside)
     }
 }
 
@@ -67,13 +60,26 @@ mod tests {
     }
 
     fn precompute() {
-        let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
-        let point = Point3::<f32>::new(0., 0., -1.);
-        let v = -Vector3::<f32>::unit_z();
-        assert_eq!(
-            Intersection::new(1., object.clone())
-                .precompute(&Ray::new(Point3::origin(), Vector3::unit_z())),
-            Computation::new(object, 1., point, v, v, true)
-        );
+        {
+            let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
+            let point = Point3::<f32>::new(0., 0., -1.);
+            let v = -Vector3::<f32>::unit_z();
+            assert_eq!(
+                Intersection::new(1., object.clone())
+                    .precompute(&Ray::new(Point3::origin(), Vector3::unit_z())),
+                Computation::new(object, 1., point, v, v, true)
+            );
+        }
+        {
+            let r = Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z());
+            let shape = Sphere::new(
+                Matrix4::from_translation(Vector3::unit_z()),
+                Material::default(),
+            );
+            let comps = Intersection::new(5., shape.clone())
+                .precompute(&Ray::new(Point3::origin(), Vector3::unit_z()));
+            assert!(comps.over_point().z < -f32::EPSILON / 2.);
+            assert!(comps.point.z > comps.over_point().z);
+        }
     }
 }

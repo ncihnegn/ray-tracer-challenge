@@ -32,7 +32,7 @@ impl<T: BaseFloat + Default> Material<T> {
         point: Point3<T>,
         eyev: Vector3<T>,
         normalv: Vector3<T>,
-        in_shadow: bool
+        in_shadow: bool,
     ) -> RGB<T> {
         let effective_color = self.color * light.intensity;
         let lightv = (light.position - point).normalize();
@@ -103,8 +103,8 @@ mod tests {
                 Light::new(Point3::new(0., 10., -10.), RGB::new(1., 1., 1.)),
                 Point3::origin(),
                 Vector3::new(0., -FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
-                -Vector3::unit_z()
-                    ,false
+                -Vector3::unit_z(),
+                false
             ),
             RGB::new(1.6364, 1.6364, 1.6364),
             max_relative = 0.00001
@@ -115,8 +115,8 @@ mod tests {
                 Light::new(Point3::new(0., 0., 10.), RGB::new(1., 1., 1.)),
                 Point3::origin(),
                 -Vector3::unit_z(),
-                -Vector3::unit_z()
-                    ,false
+                -Vector3::unit_z(),
+                false
             ),
             RGB::new(0.1, 0.1, 0.1)
         );
