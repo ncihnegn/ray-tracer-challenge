@@ -7,7 +7,7 @@ use cgmath::{
 };
 use derive_more::Constructor;
 
-#[derive(Constructor, Debug, PartialEq)]
+#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
 pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vector3<T>,
@@ -36,19 +36,19 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    fn transform(&self, transform: &Matrix4<T>) -> Ray<T> {
+    fn transform(&self, transform: Matrix4<T>) -> Ray<T> {
         Ray::<T> {
             origin: Point3::from_homogeneous(transform * self.origin.to_homogeneous()),
             direction: (transform * self.direction.extend(T::zero())).truncate(),
         }
     }
 
-    pub fn intersect(&self, object: &Shape<T>) -> Vec<Intersection<T>> {
+    pub fn intersect(&self, object: Shape<T>) -> Vec<Intersection<T>> {
         if let Some(t) = object.transform.invert() {
-            self.transform(&t)
+            self.transform(t)
                 .intersect_unit()
                 .iter()
-                .map(|&t| Intersection::new(t, object.clone()))
+                .map(|&t| Intersection::new(t, object))
                 .collect()
         } else {
             Vec::new()
@@ -109,12 +109,12 @@ mod tests {
     fn transform() {
         assert_eq!(
             Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
-                .transform(&Matrix4::from_translation(Vector3::new(3., 4., 5.))),
+                .transform(Matrix4::from_translation(Vector3::new(3., 4., 5.))),
             Ray::new(Point3::new(4., 6., 8.), Vector3::unit_y(),)
         );
         assert_eq!(
             Ray::new(Point3::new(1., 2., 3.), Vector3::unit_y(),)
-                .transform(&Matrix4::from_nonuniform_scale(2., 3., 4.)),
+                .transform(Matrix4::from_nonuniform_scale(2., 3., 4.)),
             Ray::new(Point3::new(2., 6., 12.), Vector3::new(0., 3., 0.),)
         );
     }
@@ -124,15 +124,12 @@ mod tests {
         {
             let object = Shape::new(Matrix4::from_scale(2.), Material::default());
             assert_eq!(
-                Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&object),
-                vec![
-                    Intersection::new(3., object.clone()),
-                    Intersection::new(7., object)
-                ]
+                Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(object),
+                vec![Intersection::new(3., object), Intersection::new(7., object)]
             );
         }
         assert_eq!(
-            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(&Shape::new(
+            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(Shape::new(
                 Matrix4::from_translation(Vector3::new(5., 0., 0.)),
                 Material::default()
             )),

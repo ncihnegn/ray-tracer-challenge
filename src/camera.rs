@@ -55,12 +55,12 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         )
     }
 
-    fn render(&self, w: &World<T>) -> Canvas<RGB<T>> {
+    fn render(&self, w: World<T>) -> Canvas<RGB<T>> {
         let mut image = Canvas::new(self.hsize, self.vsize);
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                image.pixels[x][y] = w.color_at(&ray);
+                image.pixels[x][y] = w.color_at(ray);
             }
         }
         image
@@ -112,7 +112,7 @@ mod tests {
             Point3::origin(),
             Vector3::unit_y(),
         );
-        let image = c.render(&w);
+        let image = c.render(w);
         approx::assert_relative_eq!(
             image.pixels[5][5],
             RGB::new(0.38066, 0.47583, 0.2855),

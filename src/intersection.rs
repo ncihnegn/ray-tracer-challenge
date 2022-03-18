@@ -5,20 +5,20 @@ use crate::shape::{normal_at, Shape};
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, Vector3};
 use derive_more::Constructor;
 
-#[derive(Constructor, Debug, Clone, PartialEq)]
+#[derive(Constructor, Copy, Debug, Clone, PartialEq)]
 pub struct Intersection<T> {
     pub t: T,
     pub object: Shape<T>,
 }
 
 impl<T: BaseFloat> Intersection<T> {
-    pub fn precompute(&self, ray: &Ray<T>) -> Computation<T> {
+    pub fn precompute(&self, ray: Ray<T>) -> Computation<T> {
         let point = ray.position(self.t);
         let eyev = -ray.direction;
-        let t_normalv = normal_at(&self.object.transform, &point).unwrap();
+        let t_normalv = normal_at(self.object.transform, point).unwrap();
         let inside = dot(t_normalv, eyev) < T::zero();
         let normalv = if inside { -t_normalv } else { t_normalv };
-        Computation::new(self.object.clone(), self.t, point, eyev, normalv, inside)
+        Computation::new(self.object, self.t, point, eyev, normalv, inside)
     }
 }
 
@@ -38,21 +38,21 @@ mod tests {
         let sphere = Shape::new(Matrix4::from_scale(1.), Material::default());
         {
             // All have positive t
-            let i1 = Intersection::new(1., sphere.clone());
+            let i1 = Intersection::new(1., sphere);
             assert_eq!(
-                super::hit(&vec![i1.clone(), Intersection::new(2., sphere.clone())]),
-                Some(i1.clone())
+                super::hit(&vec![i1, Intersection::new(2., sphere)]),
+                Some(i1)
             );
             // Some have negative t
             assert_eq!(
-                super::hit(&vec![Intersection::new(-1., sphere.clone()), i1.clone()]),
+                super::hit(&vec![Intersection::new(-1., sphere), i1]),
                 Some(i1)
             );
         }
         // All have negative t
         assert_eq!(
             super::hit(&vec![
-                Intersection::new(-2., sphere.clone()),
+                Intersection::new(-2., sphere),
                 Intersection::new(-1., sphere)
             ]),
             None
@@ -65,8 +65,8 @@ mod tests {
             let point = Point3::<f32>::new(0., 0., -1.);
             let v = -Vector3::<f32>::unit_z();
             assert_eq!(
-                Intersection::new(1., object.clone())
-                    .precompute(&Ray::new(Point3::origin(), Vector3::unit_z())),
+                Intersection::new(1., object)
+                    .precompute(Ray::new(Point3::origin(), Vector3::unit_z())),
                 Computation::new(object, 1., point, v, v, true)
             );
         }
@@ -76,8 +76,8 @@ mod tests {
                 Matrix4::from_translation(Vector3::unit_z()),
                 Material::default(),
             );
-            let comps = Intersection::new(5., shape.clone())
-                .precompute(&Ray::new(Point3::origin(), Vector3::unit_z()));
+            let comps = Intersection::new(5., shape)
+                .precompute(Ray::new(Point3::origin(), Vector3::unit_z()));
             assert!(comps.over_point().z < std::f32::EPSILON / 2.);
             assert!(comps.point.z > comps.over_point().z);
         }
