@@ -1,7 +1,7 @@
 use crate::computation::Computation;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::{normal_at, Sphere};
+use crate::shape::{Shape, Sphere};
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, Vector3};
 use derive_more::Constructor;
 
@@ -15,7 +15,7 @@ impl<T: BaseFloat> Intersection<T> {
     pub fn precompute(&self, ray: Ray<T>) -> Computation<T> {
         let point = ray.position(self.t);
         let eyev = -ray.direction;
-        let t_normalv = normal_at(self.object.transform, point).unwrap();
+        let t_normalv = self.object.normal_at(point).unwrap();
         let inside = dot(t_normalv, eyev) < T::zero();
         let normalv = if inside { -t_normalv } else { t_normalv };
         Computation::new(self.object, self.t, point, eyev, normalv, inside)

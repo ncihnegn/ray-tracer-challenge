@@ -36,7 +36,7 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    fn transform(&self, transform: Matrix4<T>) -> Ray<T> {
+    pub fn transform(&self, transform: Matrix4<T>) -> Ray<T> {
         Ray::<T> {
             origin: Point3::from_homogeneous(transform * self.origin.to_homogeneous()),
             direction: (transform * self.direction.extend(T::zero())).truncate(),

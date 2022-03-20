@@ -1,6 +1,36 @@
+use crate::intersection::Intersection;
 use crate::material::Material;
-use cgmath::{BaseFloat, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3};
+use crate::ray::Ray;
+use cgmath::{
+    BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
+};
 use derive_more::Constructor;
+
+pub trait Shape<T: BaseFloat> {
+    fn transform(&self) -> Matrix4<T>;
+    fn material(&self) -> Material<T>;
+    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>>;
+    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T>;
+
+    fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        if let Some(i) = self.transform().invert() {
+            self.local_intersect(ray.transform(i))
+        } else {
+            Vec::new()
+        }
+    }
+
+    fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
+        self.transform().invert().map(|i| {
+            (i.transpose()
+                * self
+                    .local_normal_at(Point3::from_vec((i * point.to_homogeneous()).truncate()))
+                    .extend(T::zero()))
+            .truncate()
+            .normalize()
+        })
+    }
+}
 
 #[derive(Constructor, Copy, Clone, Debug, PartialEq)]
 pub struct Sphere<T> {
@@ -8,12 +38,44 @@ pub struct Sphere<T> {
     pub material: Material<T>,
 }
 
-pub fn normal_at<T: BaseFloat>(s: Matrix4<T>, p: Point3<T>) -> Option<Vector3<T>> {
-    s.invert().map(|m| {
-        (m.transpose() * (m * p.to_homogeneous()))
-            .truncate()
-            .normalize()
-    })
+impl<T: BaseFloat + Default> Default for Sphere<T> {
+    fn default() -> Sphere<T> {
+        Sphere::<T> {
+            transform: Matrix4::from_scale(T::one()),
+            material: Material::<T>::default(),
+        }
+    }
+}
+
+impl<T: BaseFloat> Shape<T> for Sphere<T> {
+    fn transform(&self) -> Matrix4<T> {
+        self.transform
+    }
+
+    fn material(&self) -> Material<T> {
+        self.material
+    }
+
+    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        let sphere_to_ray = ray.origin.to_vec();
+        let a = ray.direction.dot(ray.direction);
+        let two = T::from(2).unwrap();
+        let b = ray.direction.dot(sphere_to_ray) * two;
+        let c = sphere_to_ray.dot(sphere_to_ray) - T::one();
+        let discriminant = b * b - T::from(4).unwrap() * a * c;
+        match discriminant {
+            d if d > T::zero() => vec![
+                Intersection::new((-b - d.sqrt()) / (two * a), *self),
+                Intersection::new((-b + d.sqrt()) / (two * a), *self),
+            ],
+            d if d == T::zero() => vec![Intersection::new(-b / (two * a), *self)],
+            _ => vec![],
+        }
+    }
+
+    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+        point.to_vec()
+    }
 }
 
 pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
@@ -28,32 +90,31 @@ mod tests {
     #[test]
     fn normal() {
         {
-            let sphere = Matrix4::from_scale(1.);
-            assert_eq!(
-                normal_at(sphere, Point3::new(1., 0., 0.)),
-                Some(Vector3::unit_x())
-            );
-            assert_eq!(
-                normal_at(sphere, Point3::new(0., 1., 0.)),
-                Some(Vector3::unit_y())
-            );
-            assert_eq!(
-                normal_at(sphere, Point3::new(0., 0., 1.)),
-                Some(Vector3::unit_z())
-            );
+            let sphere = Sphere::default();
+            {
+                let v = Vector3::unit_x();
+                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+            }
+            {
+                let v = Vector3::unit_y();
+                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+            }
+            {
+                let v = Vector3::unit_z();
+                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+            }
             {
                 let d = 3.0_f32.sqrt().recip();
-                assert_relative_eq!(
-                    normal_at(sphere, Point3::new(d, d, d)).unwrap(),
-                    Vector3::new(d, d, d)
-                );
+                let v = Vector3::new(d, d, d);
+                assert_relative_eq!(sphere.normal_at(Point3::from_vec(v)).unwrap(), v);
             }
         }
         assert_relative_eq!(
-            normal_at(
+            Sphere::new(
                 Matrix4::from_translation(Vector3::unit_y()),
-                Point3::new(0., 1.70711, -0.70711)
+                Material::default()
             )
+            .normal_at(Point3::new(0., 1.70711, -0.70711))
             .unwrap(),
             Vector3::new(0., 0.70711, -0.70711),
             max_relative = 0.00001,
@@ -61,11 +122,12 @@ mod tests {
         {
             let t = 2.0_f32.sqrt().recip();
             assert_relative_eq!(
-                normal_at(
+                Sphere::new(
                     Matrix4::from_nonuniform_scale(1., 0.5, 1.)
                         * Matrix4::from_axis_angle(Vector3::unit_z(), Rad(PI / 5.)),
-                    Point3::new(0., t, -t)
+                    Material::default()
                 )
+                .normal_at(Point3::new(0., t, -t))
                 .unwrap(),
                 Vector3::new(0., 0.97014, -0.24254),
                 max_relative = 0.0001,
