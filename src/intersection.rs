@@ -1,14 +1,14 @@
 use crate::computation::Computation;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::{normal_at, Shape};
+use crate::shape::{normal_at, Sphere};
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, Vector3};
 use derive_more::Constructor;
 
 #[derive(Constructor, Copy, Debug, Clone, PartialEq)]
 pub struct Intersection<T> {
     pub t: T,
-    pub object: Shape<T>,
+    pub object: Sphere<T>,
 }
 
 impl<T: BaseFloat> Intersection<T> {
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn hit() {
-        let sphere = Shape::new(Matrix4::from_scale(1.), Material::default());
+        let sphere = Sphere::new(Matrix4::from_scale(1.), Material::default());
         {
             // All have positive t
             let i1 = Intersection::new(1., sphere);
@@ -61,7 +61,7 @@ mod tests {
 
     fn precompute() {
         {
-            let object = Shape::new(Matrix4::from_scale(1.), Material::default());
+            let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
             let point = Point3::<f32>::new(0., 0., -1.);
             let v = -Vector3::<f32>::unit_z();
             assert_eq!(
@@ -72,7 +72,7 @@ mod tests {
         }
         {
             let r = Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z());
-            let shape = Shape::new(
+            let shape = Sphere::new(
                 Matrix4::from_translation(Vector3::unit_z()),
                 Material::default(),
             );

@@ -3,7 +3,7 @@ use crate::intersection::{hit, Intersection};
 use crate::light::Light;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::Shape;
+use crate::shape::Sphere;
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
@@ -11,7 +11,7 @@ use rgb::RGB;
 #[derive(Constructor)]
 pub struct World<T> {
     light: Light<T>,
-    objects: Vec<Shape<T>>,
+    objects: Vec<Sphere<T>>,
 }
 
 impl<T: BaseFloat + Default> Default for World<T> {
@@ -24,7 +24,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                 RGB::new(one, one, one),
             ),
             objects: vec![
-                Shape::new(
+                Sphere::new(
                     Matrix4::from_scale(one),
                     Material::new(
                         RGB::new(T::from(0.8).unwrap(), T::one(), T::from(0.6).unwrap()),
@@ -34,7 +34,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                         T::from(200).unwrap(),
                     ),
                 ),
-                Shape::new(
+                Sphere::new(
                     Matrix4::from_scale(T::from(0.5).unwrap()),
                     Material::default(),
                 ),

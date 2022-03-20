@@ -3,7 +3,7 @@ use cgmath::{BaseFloat, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vecto
 use derive_more::Constructor;
 
 #[derive(Constructor, Copy, Clone, Debug, PartialEq)]
-pub struct Shape<T> {
+pub struct Sphere<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
 }

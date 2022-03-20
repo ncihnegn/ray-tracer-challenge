@@ -1,10 +1,10 @@
-use crate::shape::Shape;
+use crate::shape::Sphere;
 use cgmath::{BaseFloat, Point3, Vector3};
 use derive_more::Constructor;
 
 #[derive(Constructor, Debug, PartialEq)]
 pub struct Computation<T> {
-    pub object: Shape<T>,
+    pub object: Sphere<T>,
     pub t: T,
     pub point: Point3<T>,
     pub eyev: Vector3<T>,
