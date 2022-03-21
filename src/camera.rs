@@ -46,7 +46,7 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         let world_x = self.half_width - xoffset;
         let world_y = self.half_height - yoffset;
         let inverse = self.transform.invert().unwrap();
-        let negone = T::from(-1_i8).unwrap();
+        let negone = T::from(-1).unwrap();
         let pixel = inverse * Point3::new(world_x, world_y, negone).to_homogeneous();
         let origin = inverse * Point3::origin().to_homogeneous();
         Ray::<T>::new(

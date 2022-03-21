@@ -3,7 +3,7 @@ use crate::intersection::{hit, Intersection};
 use crate::light::Light;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::Sphere;
+use crate::shape::{Shape, Sphere, TraitShape};
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
@@ -11,7 +11,7 @@ use rgb::RGB;
 #[derive(Constructor)]
 pub struct World<T> {
     light: Light<T>,
-    objects: Vec<Sphere<T>>,
+    objects: Vec<Shape<T>>,
 }
 
 impl<T: BaseFloat + Default> Default for World<T> {
@@ -24,7 +24,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                 RGB::new(one, one, one),
             ),
             objects: vec![
-                Sphere::new(
+                Shape::Sphere(Sphere::new(
                     Matrix4::from_scale(one),
                     Material::new(
                         RGB::new(T::from(0.8).unwrap(), T::one(), T::from(0.6).unwrap()),
@@ -33,11 +33,11 @@ impl<T: BaseFloat + Default> Default for World<T> {
                         T::from(0.2).unwrap(),
                         T::from(200).unwrap(),
                     ),
-                ),
-                Sphere::new(
+                )),
+                Shape::Sphere(Sphere::new(
                     Matrix4::from_scale(T::from(0.5).unwrap()),
                     Material::default(),
-                ),
+                )),
             ],
         }
     }
@@ -45,7 +45,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
 
 impl<T: BaseFloat + Default> World<T> {
     fn shade_hit(&self, comps: Computation<T>) -> RGB<T> {
-        comps.object.material.lighting(
+        comps.object.material().lighting(
             self.light,
             comps.point,
             comps.eyev,
@@ -57,7 +57,7 @@ impl<T: BaseFloat + Default> World<T> {
     fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         self.objects
             .iter()
-            .map(|&s| ray.intersect(s))
+            .map(|&s| s.intersect(ray))
             .into_iter()
             .flatten()
             .collect()
@@ -113,21 +113,23 @@ mod tests {
     #[test]
     fn color_at() {
         let mut w = World::<f32>::default();
-        assert_eq!(
-            w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_y())),
-            RGB::default()
-        );
-        assert_relative_eq!(
-            w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
-            RGB::new(0.38066, 0.47583, 0.2855),
-            max_relative = 0.0001
-        );
         {
-            w.objects[0].material.ambient = 1.;
-            w.objects[1].material.ambient = 1.;
+            assert_eq!(
+                w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_y())),
+                RGB::default()
+            );
+            assert_relative_eq!(
+                w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
+                RGB::new(0.38066, 0.47583, 0.2855),
+                max_relative = 0.0001
+            );
+        }
+        {
+            w.objects[0].as_sphere_mut().unwrap().material.ambient = 1.;
+            w.objects[1].as_sphere_mut().unwrap().material.ambient = 1.;
             assert_eq!(
                 w.color_at(Ray::new(Point3::new(0., 0., 0.75), -Vector3::unit_z())),
-                w.objects[1].material.color
+                w.objects[1].material().color
             );
         }
     }

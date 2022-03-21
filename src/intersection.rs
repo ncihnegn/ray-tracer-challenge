@@ -1,14 +1,14 @@
 use crate::computation::Computation;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::{Shape, Sphere};
+use crate::shape::{Shape, Sphere, TraitShape};
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, Vector3};
 use derive_more::Constructor;
 
-#[derive(Constructor, Copy, Debug, Clone, PartialEq)]
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
 pub struct Intersection<T> {
     pub t: T,
-    pub object: Sphere<T>,
+    pub object: Shape<T>,
 }
 
 impl<T: BaseFloat> Intersection<T> {
@@ -22,7 +22,7 @@ impl<T: BaseFloat> Intersection<T> {
     }
 }
 
-pub fn hit<T: BaseFloat>(v: &Vec<Intersection<T>>) -> Option<Intersection<T>> {
+pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
     v.iter()
         .filter(|i| i.t >= T::zero())
         .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn hit() {
-        let sphere = Sphere::new(Matrix4::from_scale(1.), Material::default());
+        let sphere = Shape::Sphere(Sphere::new(Matrix4::from_scale(1.), Material::default()));
         {
             // All have positive t
             let i1 = Intersection::new(1., sphere);
@@ -61,7 +61,7 @@ mod tests {
 
     fn precompute() {
         {
-            let object = Sphere::new(Matrix4::from_scale(1.), Material::default());
+            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(1.), Material::default()));
             let point = Point3::<f32>::new(0., 0., -1.);
             let v = -Vector3::<f32>::unit_z();
             assert_eq!(
@@ -72,10 +72,10 @@ mod tests {
         }
         {
             let r = Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z());
-            let shape = Sphere::new(
+            let shape = Shape::Sphere(Sphere::new(
                 Matrix4::from_translation(Vector3::unit_z()),
                 Material::default(),
-            );
+            ));
             let comps = Intersection::new(5., shape)
                 .precompute(Ray::new(Point3::origin(), Vector3::unit_z()));
             assert!(comps.over_point().z < std::f32::EPSILON / 2.);

@@ -5,8 +5,45 @@ use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
 };
 use derive_more::Constructor;
+use enum_as_inner::EnumAsInner;
 
-pub trait Shape<T: BaseFloat> {
+#[derive(Clone, Copy, Debug, EnumAsInner, PartialEq)]
+pub enum Shape<T> {
+    Plane(Plane<T>),
+    Sphere(Sphere<T>),
+}
+
+impl<T: BaseFloat> Shape<T> {
+    pub fn transform(&self) -> Matrix4<T> {
+        match self {
+            Shape::Plane(p) => p.transform(),
+            Shape::Sphere(s) => s.transform(),
+        }
+    }
+
+    pub fn material(&self) -> Material<T> {
+        match self {
+            Shape::Plane(p) => p.material(),
+            Shape::Sphere(s) => s.material(),
+        }
+    }
+
+    pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        match self {
+            Shape::Plane(p) => p.intersect(ray),
+            Shape::Sphere(s) => s.intersect(ray),
+        }
+    }
+
+    pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
+        match self {
+            Shape::Plane(p) => p.normal_at(point),
+            Shape::Sphere(s) => s.normal_at(point),
+        }
+    }
+}
+
+pub trait TraitShape<T: BaseFloat> {
     fn transform(&self) -> Matrix4<T>;
     fn material(&self) -> Material<T>;
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>>;
@@ -47,7 +84,7 @@ impl<T: BaseFloat + Default> Default for Sphere<T> {
     }
 }
 
-impl<T: BaseFloat> Shape<T> for Sphere<T> {
+impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
     fn transform(&self) -> Matrix4<T> {
         self.transform
     }
@@ -65,16 +102,56 @@ impl<T: BaseFloat> Shape<T> for Sphere<T> {
         let discriminant = b * b - T::from(4).unwrap() * a * c;
         match discriminant {
             d if d > T::zero() => vec![
-                Intersection::new((-b - d.sqrt()) / (two * a), *self),
-                Intersection::new((-b + d.sqrt()) / (two * a), *self),
+                Intersection::new((-b - d.sqrt()) / (two * a), Shape::Sphere(*self)),
+                Intersection::new((-b + d.sqrt()) / (two * a), Shape::Sphere(*self)),
             ],
-            d if d == T::zero() => vec![Intersection::new(-b / (two * a), *self)],
+            d if d == T::zero() => vec![Intersection::new(-b / (two * a), Shape::Sphere(*self))],
             _ => vec![],
         }
     }
 
     fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         point.to_vec()
+    }
+}
+
+#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
+pub struct Plane<T> {
+    pub transform: Matrix4<T>,
+    pub material: Material<T>,
+}
+
+impl<T: BaseFloat + Default> Default for Plane<T> {
+    fn default() -> Plane<T> {
+        Plane::<T> {
+            transform: Matrix4::from_scale(T::one()),
+            material: Material::<T>::default(),
+        }
+    }
+}
+
+impl<T: BaseFloat> TraitShape<T> for Plane<T> {
+    fn transform(&self) -> Matrix4<T> {
+        self.transform
+    }
+
+    fn material(&self) -> Material<T> {
+        self.material
+    }
+
+    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        if ray.direction.y.abs() < T::epsilon() {
+            Vec::new()
+        } else {
+            vec![Intersection::new(
+                -ray.origin.y / ray.direction.y,
+                Shape::Plane(*self),
+            )]
+        }
+    }
+
+    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+        Vector3::unit_y()
     }
 }
 
@@ -124,7 +201,7 @@ mod tests {
             assert_relative_eq!(
                 Sphere::new(
                     Matrix4::from_nonuniform_scale(1., 0.5, 1.)
-                        * Matrix4::from_axis_angle(Vector3::unit_z(), Rad(PI / 5.)),
+                        * Matrix4::from_angle_z(Rad(PI / 5.)),
                     Material::default()
                 )
                 .normal_at(Point3::new(0., t, -t))

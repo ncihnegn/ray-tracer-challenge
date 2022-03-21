@@ -1,6 +1,6 @@
 use crate::impl_approx;
 use crate::intersection::Intersection;
-use crate::shape::Sphere;
+use crate::shape::{Shape, Sphere};
 use cgmath::{
     AbsDiffEq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, RelativeEq, SquareMatrix,
     UlpsEq, Vector3,
@@ -43,8 +43,8 @@ impl<T: BaseFloat> Ray<T> {
         }
     }
 
-    pub fn intersect(&self, object: Sphere<T>) -> Vec<Intersection<T>> {
-        if let Some(t) = object.transform.invert() {
+    pub fn intersect(&self, object: Shape<T>) -> Vec<Intersection<T>> {
+        if let Some(t) = object.transform().invert() {
             self.transform(t)
                 .intersect_unit()
                 .iter()
@@ -122,16 +122,18 @@ mod tests {
     #[test]
     fn intersect() {
         {
-            let object = Sphere::new(Matrix4::from_scale(2.), Material::default());
+            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
             assert_eq!(
                 Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(object),
                 vec![Intersection::new(3., object), Intersection::new(7., object)]
             );
         }
         assert_eq!(
-            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(Sphere::new(
-                Matrix4::from_translation(Vector3::new(5., 0., 0.)),
-                Material::default()
+            Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z(),).intersect(Shape::Sphere(
+                Sphere::new(
+                    Matrix4::from_translation(Vector3::new(5., 0., 0.)),
+                    Material::default()
+                )
             )),
             vec![]
         );

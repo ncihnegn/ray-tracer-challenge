@@ -7,5 +7,6 @@ edition = "2021"
 approx = "*"
 cgmath = "*"
 derive_more = "*"
+enum-as-inner = "*"
 num-traits = "*"
 rgb = { git = "https://github.com/ncihnegn/rust-rgb", branch = "approx" }
