@@ -61,7 +61,7 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                image.pixels[x][y] = w.color_at(ray);
+                image.pixels[x][y] = w.color_at(ray, 1);
             }
         }
         image

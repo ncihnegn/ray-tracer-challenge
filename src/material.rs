@@ -12,6 +12,7 @@ pub struct Material<T> {
     pub diffuse: T,
     pub specular: T,
     pub shininess: T,
+    pub reflective: T,
 }
 
 impl<T: BaseFloat + Default> Default for Material<T> {
@@ -22,6 +23,7 @@ impl<T: BaseFloat + Default> Default for Material<T> {
             diffuse: T::from(0.9).unwrap(),
             specular: T::from(0.9).unwrap(),
             shininess: T::from(200.).unwrap(),
+            reflective: T::zero(),
         }
     }
 }

@@ -1,7 +1,7 @@
 use crate::computation::Computation;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::shape::{Shape, Sphere, TraitShape};
+use crate::shape::{reflect, Plane, Shape, Sphere, TraitShape};
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, Vector3};
 use derive_more::Constructor;
 
@@ -18,7 +18,8 @@ impl<T: BaseFloat> Intersection<T> {
         let t_normalv = self.object.normal_at(point).unwrap();
         let inside = dot(t_normalv, eyev) < T::zero();
         let normalv = if inside { -t_normalv } else { t_normalv };
-        Computation::new(self.object, self.t, point, eyev, normalv, inside)
+        let reflectv = reflect(ray.direction, normalv);
+        Computation::new(self.object, self.t, point, eyev, normalv, inside, reflectv)
     }
 }
 
@@ -32,7 +33,7 @@ pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
 mod tests {
     use super::*;
     use num_traits::Float;
-    use std::f32::EPSILON;
+    use std::f32::{consts::FRAC_1_SQRT_2, EPSILON};
 
     #[test]
     fn hit() {
@@ -68,7 +69,7 @@ mod tests {
             assert_eq!(
                 Intersection::new(1., object)
                     .precompute(Ray::new(Point3::origin(), Vector3::unit_z())),
-                Computation::new(object, 1., point, v, v, true)
+                Computation::new(object, 1., point, v, v, true, Vector3::unit_z())
             );
         }
         {
@@ -81,6 +82,19 @@ mod tests {
                 .precompute(Ray::new(Point3::origin(), Vector3::unit_z()));
             assert!(comps.over_point().z < EPSILON / 2.);
             assert!(comps.point.z > comps.over_point().z);
+        }
+        {
+            let shape = Plane::default();
+            let r = Ray::new(
+                Point3::new(0., 1., -1.),
+                Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+            );
+            let i = Intersection::new(2.0_f32.sqrt(), Shape::Plane(shape));
+            let comps = i.precompute(r);
+            assert_eq!(
+                comps.reflectv,
+                Vector3::new(0., FRAC_1_SQRT_2, FRAC_1_SQRT_2)
+            );
         }
     }
 }
