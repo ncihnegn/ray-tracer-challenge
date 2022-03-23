@@ -69,7 +69,7 @@ pub trait TraitShape<T: BaseFloat> {
     }
 }
 
-#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
 pub struct Sphere<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -115,7 +115,7 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
     }
 }
 
-#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
 pub struct Plane<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,

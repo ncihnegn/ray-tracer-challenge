@@ -41,8 +41,9 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
     }
 
     pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray<T> {
-        let xoffset = T::from(px as f32 + 0.5).unwrap() * self.pixel_size;
-        let yoffset = T::from(py as f32 + 0.5).unwrap() * self.pixel_size;
+        let half = T::from(0.5).unwrap();
+        let xoffset = (T::from(px).unwrap() + half) * self.pixel_size;
+        let yoffset = (T::from(py).unwrap() + half) * self.pixel_size;
         let world_x = self.half_width - xoffset;
         let world_y = self.half_height - yoffset;
         let inverse = self.transform.invert().unwrap();
@@ -94,7 +95,7 @@ mod tests {
         {
             let point = Point3::new(0., 2., -5.);
             c.transform = Matrix4::from(Quaternion::from_angle_y(Rad(FRAC_PI_4)))
-                * Matrix4::<f32>::from_translation(-point.to_vec());
+                * Matrix4::from_translation(-point.to_vec());
             assert_abs_diff_eq!(
                 c.ray_for_pixel(100, 50),
                 Ray::new(point, Vector3::new(FRAC_1_SQRT_2, 0., -FRAC_1_SQRT_2)),
@@ -105,8 +106,8 @@ mod tests {
 
     #[test]
     fn render() {
-        let w = World::<f32>::default();
-        let mut c = Camera::<f32>::from(11, 11, FRAC_PI_2);
+        let w = World::default();
+        let mut c = Camera::from(11, 11, FRAC_PI_2);
         c.transform = Matrix4::look_at_rh(
             Point3::new(0., 0., -5.),
             Point3::origin(),

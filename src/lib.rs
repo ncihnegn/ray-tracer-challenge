@@ -4,6 +4,7 @@ mod computation;
 mod intersection;
 mod light;
 mod material;
+mod pattern;
 mod ray;
 mod shape;
 mod world;

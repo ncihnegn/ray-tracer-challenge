@@ -1,4 +1,5 @@
 use crate::light::Light;
+use crate::pattern::Pattern;
 use crate::shape::reflect;
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
 use derive_more::Constructor;
@@ -6,7 +7,7 @@ use rgb::RGB;
 
 #[derive(Constructor, Copy, Clone, Debug, PartialEq)]
 pub struct Material<T> {
-    pub color: RGB<T>,
+    pub pattern: Pattern<T>,
     pub ambient: T,
     pub diffuse: T,
     pub specular: T,
@@ -16,7 +17,7 @@ pub struct Material<T> {
 impl<T: BaseFloat + Default> Default for Material<T> {
     fn default() -> Material<T> {
         Material::<T> {
-            color: RGB::new(T::one(), T::one(), T::one()),
+            pattern: Pattern::Solid(RGB::new(T::one(), T::one(), T::one())),
             ambient: T::from(0.1).unwrap(),
             diffuse: T::from(0.9).unwrap(),
             specular: T::from(0.9).unwrap(),
@@ -34,7 +35,7 @@ impl<T: BaseFloat + Default> Material<T> {
         normalv: Vector3<T>,
         in_shadow: bool,
     ) -> RGB<T> {
-        let effective_color = self.color * light.intensity;
+        let effective_color = self.pattern.at(point) * light.intensity;
         let lightv = (light.position - point).normalize();
         let ambient = effective_color * self.ambient;
         let mut diffuse = RGB::default();

@@ -32,6 +32,7 @@ pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
 mod tests {
     use super::*;
     use num_traits::Float;
+    use std::f32::EPSILON;
 
     #[test]
     fn hit() {
@@ -62,8 +63,8 @@ mod tests {
     fn precompute() {
         {
             let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(1.), Material::default()));
-            let point = Point3::<f32>::new(0., 0., -1.);
-            let v = -Vector3::<f32>::unit_z();
+            let point = Point3::new(0., 0., -1.);
+            let v = -Vector3::unit_z();
             assert_eq!(
                 Intersection::new(1., object)
                     .precompute(Ray::new(Point3::origin(), Vector3::unit_z())),
@@ -78,7 +79,7 @@ mod tests {
             ));
             let comps = Intersection::new(5., shape)
                 .precompute(Ray::new(Point3::origin(), Vector3::unit_z()));
-            assert!(comps.over_point().z < std::f32::EPSILON / 2.);
+            assert!(comps.over_point().z < EPSILON / 2.);
             assert!(comps.point.z > comps.over_point().z);
         }
     }

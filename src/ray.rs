@@ -7,7 +7,7 @@ use cgmath::{
 };
 use derive_more::Constructor;
 
-#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
 pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vector3<T>,
