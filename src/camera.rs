@@ -56,12 +56,12 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         )
     }
 
-    fn render(&self, w: World<T>) -> Canvas<RGB<T>> {
+    fn render(&self, mut w: World<T>) -> Canvas<RGB<T>> {
         let mut image = Canvas::new(self.hsize, self.vsize);
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                image.pixels[x][y] = w.color_at(ray, 1);
+                image.pixels[x][y] = w.color_at(ray);
             }
         }
         image
