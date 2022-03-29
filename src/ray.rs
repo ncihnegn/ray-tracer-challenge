@@ -1,6 +1,8 @@
-use crate::impl_approx;
-use crate::intersection::Intersection;
-use crate::shape::{Shape, Sphere};
+use crate::{
+    impl_approx,
+    intersection::Intersection,
+    shape::{Shape, Sphere},
+};
 use cgmath::{
     AbsDiffEq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, RelativeEq, SquareMatrix,
     UlpsEq, Vector3,

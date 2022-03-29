@@ -1,6 +1,4 @@
-use crate::intersection::Intersection;
-use crate::material::Material;
-use crate::ray::Ray;
+use crate::{intersection::Intersection, material::Material, ray::Ray};
 use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
 };
@@ -78,8 +76,8 @@ pub struct Sphere<T> {
 impl<T: BaseFloat + Default> Default for Sphere<T> {
     fn default() -> Sphere<T> {
         Sphere::<T> {
-            transform: Matrix4::from_scale(T::one()),
-            material: Material::<T>::default(),
+            transform: Matrix4::identity(),
+            material: Material::default(),
         }
     }
 }
@@ -124,8 +122,8 @@ pub struct Plane<T> {
 impl<T: BaseFloat + Default> Default for Plane<T> {
     fn default() -> Plane<T> {
         Plane::<T> {
-            transform: Matrix4::from_scale(T::one()),
-            material: Material::<T>::default(),
+            transform: Matrix4::identity(),
+            material: Material::default(),
         }
     }
 }

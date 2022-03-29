@@ -1,15 +1,17 @@
-use crate::computation::Computation;
-use crate::intersection::{hit, Intersection};
-use crate::light::Light;
-use crate::material::Material;
-use crate::pattern::Pattern;
-use crate::ray::Ray;
-use crate::shape::{Plane, Shape, Sphere, TraitShape};
-use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3};
+use crate::{
+    computation::Computation,
+    intersection::{hit, Intersection},
+    light::Light,
+    material::Material,
+    pattern::{Pattern, Test},
+    ray::Ray,
+    shape::{Plane, Shape, Sphere, TraitShape},
+};
+use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Constructor)]
+#[derive(Constructor, Debug)]
 pub struct World<T> {
     light: Light<T>,
     objects: Vec<Shape<T>>,
@@ -27,18 +29,16 @@ impl<T: BaseFloat + Default> Default for World<T> {
             ),
             objects: vec![
                 Shape::Sphere(Sphere::new(
-                    Matrix4::from_scale(one),
+                    Matrix4::identity(),
                     Material::new(
-                        Pattern::Solid(RGB::new(
-                            T::from(0.8).unwrap(),
-                            T::one(),
-                            T::from(0.6).unwrap(),
-                        )),
+                        Pattern::Solid(RGB::new(T::from(0.8).unwrap(), one, T::from(0.6).unwrap())),
                         T::from(0.1).unwrap(),
                         T::from(0.7).unwrap(),
                         T::from(0.2).unwrap(),
                         T::from(200).unwrap(),
                         T::zero(),
+                        T::zero(),
+                        one,
                     ),
                 )),
                 Shape::Sphere(Sphere::new(
@@ -62,7 +62,8 @@ impl<T: BaseFloat + Default> World<T> {
             shadowed,
         );
         let reflected = self.reflected_color(comps);
-        surface + reflected
+        let refracted = self.refracted_color(comps);
+        surface + reflected + refracted
     }
 
     fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -75,8 +76,13 @@ impl<T: BaseFloat + Default> World<T> {
     }
 
     pub fn color_at(&mut self, ray: Ray<T>) -> RGB<T> {
-        if let Some(i) = hit(&self.intersect(ray)) {
-            self.shade_hit(i.precompute(ray))
+        let xs = self.intersect(ray);
+        if let Some(i) = hit(&xs) {
+            if let Some(comps) = i.precompute(ray, &xs) {
+                self.shade_hit(comps)
+            } else {
+                RGB::default()
+            }
         } else {
             RGB::default()
         }
@@ -104,6 +110,27 @@ impl<T: BaseFloat + Default> World<T> {
             color * r
         }
     }
+
+    fn refracted_color(&mut self, comps: Computation<T>) -> RGB<T> {
+        if self.recursion == 0 || comps.object.material().transparency == T::zero() {
+            self.recursion = 5;
+            RGB::default()
+        } else {
+            let one = T::one();
+            let n_ratio = comps.n1 / comps.n2;
+            let cos_i = comps.eyev.dot(comps.normalv);
+            let sin2_t = n_ratio * n_ratio * (one - cos_i * cos_i);
+            if sin2_t > one {
+                RGB::default()
+            } else {
+                let cos_t = (one - sin2_t).sqrt();
+                let direction = comps.normalv * (n_ratio * cos_i - cos_t) - comps.eyev * n_ratio;
+                let refracted_ray = Ray::new(comps.under_point(), direction);
+                self.recursion -= 1;
+                self.color_at(refracted_ray) * comps.object.material().transparency
+            }
+        }
+    }
 }
 
 mod tests {
@@ -117,10 +144,12 @@ mod tests {
     fn shade_hit() {
         {
             let mut w = World::default();
+            let i = Intersection::new(4., w.objects[0]);
+            let xs = vec![i];
             assert_relative_eq!(
                 w.shade_hit(
-                    Intersection::new(4., w.objects[0])
-                        .precompute(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
+                    i.precompute(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z()), &xs)
+                        .unwrap(),
                 ),
                 RGB::new(0.38066, 0.47583, 0.2855),
                 max_relative = 0.0001
@@ -129,10 +158,12 @@ mod tests {
         {
             let mut w = World::default();
             w.light = Light::new(Point3::new(0., 0.25, 0.), RGB::new(1., 1., 1.));
+            let i = Intersection::new(0.5, w.objects[1]);
+            let xs = vec![i];
             assert_relative_eq!(
                 w.shade_hit(
-                    Intersection::new(0.5, w.objects[1])
-                        .precompute(Ray::new(Point3::origin(), Vector3::unit_z())),
+                    i.precompute(Ray::new(Point3::origin(), Vector3::unit_z()), &xs)
+                        .unwrap(),
                 ),
                 RGB::new(0.90498, 0.90498, 0.90498),
                 max_relative = 0.00001
@@ -150,11 +181,38 @@ mod tests {
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
             let i = Intersection::new(2.0_f32.sqrt(), shape);
-            let comps = i.precompute(r);
+            let xs = vec![i];
+            let comps = i.precompute(r, &xs).unwrap();
             assert_relative_eq!(
-                w.shade_hit(comps,),
+                w.shade_hit(comps),
                 RGB::new(0.87677, 0.92436, 0.82918),
                 max_relative = 0.0001
+            );
+        }
+        {
+            let mut w = World::default();
+            let mut floor = Plane::default();
+            floor.transform = Matrix4::from_translation(-Vector3::unit_y());
+            floor.material.transparency = 0.5;
+            floor.material.refractive_index = 1.5;
+            let mut ball = Sphere::default();
+            ball.material.pattern = Pattern::Solid(RGB::new(1., 0., 0.));
+            ball.material.ambient = 0.5;
+            ball.transform = Matrix4::from_translation(Vector3::new(0., -3.5, -0.5));
+            let shape = Shape::Plane(floor);
+            w.objects.push(shape);
+            w.objects.push(Shape::Sphere(ball));
+            let r = Ray::new(
+                Point3::from_vec(Vector3::unit_z() * -3.),
+                Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+            );
+            let i = Intersection::new(2.0_f32.sqrt(), shape);
+            let xs = vec![i];
+            let comps = i.precompute(r, &xs).unwrap();
+            assert_relative_eq!(
+                w.shade_hit(comps),
+                RGB::new(0.93642, 0.68642, 0.68642),
+                max_relative = 0.00001
             );
         }
     }
@@ -195,12 +253,12 @@ mod tests {
     #[test]
     fn reflected_color() {
         let mut w = World::default();
+        let xs = Vec::new();
         {
             let r = Ray::new(Point3::origin(), Vector3::unit_z());
-            let mut shape = w.objects[1];
-            shape.as_sphere_mut().unwrap().material.ambient = 1.;
-            let i = Intersection::new(1., shape);
-            let comps = i.precompute(r);
+            w.objects[1].as_sphere_mut().unwrap().material.ambient = 1.;
+            let i = Intersection::new(1., w.objects[1]);
+            let comps = i.precompute(r, &xs).unwrap();
             assert_eq!(w.reflected_color(comps), RGB::default());
         }
         {
@@ -214,7 +272,7 @@ mod tests {
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
             let i = Intersection::new(2.0_f32.sqrt(), shape);
-            let comps = i.precompute(r);
+            let comps = i.precompute(r, &xs).unwrap();
             w.recursion = 0;
             assert_eq!(w.reflected_color(comps), RGB::default());
             w.recursion = 1;
@@ -243,6 +301,67 @@ mod tests {
             w.objects[1] = Shape::Plane(plane);
         }
         let r = Ray::new(Point3::origin(), Vector3::unit_y());
-        let c = w.color_at(r);
+        let _ = w.color_at(r);
+    }
+
+    #[test]
+    fn refracted_color() {
+        let vz = Vector3::unit_z();
+        {
+            let mut w = World::default();
+            let shape = w.objects[0];
+            let xs = vec![Intersection::new(4., shape), Intersection::new(6., shape)];
+            let comps = xs[0]
+                .precompute(Ray::new(Point3::from_vec(vz * -5.), vz), &xs)
+                .unwrap();
+            assert_eq!(w.refracted_color(comps), RGB::default());
+        }
+        {
+            let mut w = World::default();
+            w.objects[0].as_sphere_mut().unwrap().material.transparency = 1.0;
+            w.objects[0]
+                .as_sphere_mut()
+                .unwrap()
+                .material
+                .refractive_index = 1.5;
+            let shape = w.objects[0];
+            let xs = vec![
+                Intersection::new(-FRAC_1_SQRT_2, shape),
+                Intersection::new(FRAC_1_SQRT_2, shape),
+            ];
+            let comps = xs[1]
+                .precompute(
+                    Ray::new(Point3::from_vec(vz * FRAC_1_SQRT_2), Vector3::unit_y()),
+                    &xs,
+                )
+                .unwrap();
+            assert_eq!(w.refracted_color(comps), RGB::default());
+        }
+        {
+            let mut w = World::default();
+            w.objects[0].as_sphere_mut().unwrap().material.ambient = 1.;
+            w.objects[0].as_sphere_mut().unwrap().material.pattern =
+                Pattern::Test(Test::new(Matrix4::identity()));
+            w.objects[1].as_sphere_mut().unwrap().material.transparency = 1.;
+            w.objects[1]
+                .as_sphere_mut()
+                .unwrap()
+                .material
+                .refractive_index = 1.5;
+            let xs = vec![
+                Intersection::new(-0.9899, w.objects[0]),
+                Intersection::new(-0.4899, w.objects[1]),
+                Intersection::new(0.4899, w.objects[1]),
+                Intersection::new(0.9899, w.objects[0]),
+            ];
+            let comps = xs[2]
+                .precompute(Ray::new(Point3::from_vec(vz * 0.1), Vector3::unit_y()), &xs)
+                .unwrap();
+            assert_relative_eq!(
+                w.refracted_color(comps),
+                RGB::new(0., 0.99888, 0.04725),
+                max_relative = 0.001
+            );
+        }
     }
 }

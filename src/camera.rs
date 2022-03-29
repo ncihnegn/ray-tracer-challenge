@@ -1,6 +1,4 @@
-use crate::canvas::Canvas;
-use crate::ray::Ray;
-use crate::world::World;
+use crate::{canvas::Canvas, ray::Ray, world::World};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;
 use rgb::RGB;
@@ -33,7 +31,7 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
             hsize,
             vsize,
             field_of_view,
-            transform: Matrix4::<T>::identity(),
+            transform: Matrix4::identity(),
             half_width,
             half_height,
             pixel_size: half_width * two / h,
@@ -50,7 +48,7 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         let negone = T::from(-1).unwrap();
         let pixel = inverse * Point3::new(world_x, world_y, negone).to_homogeneous();
         let origin = inverse * Point3::origin().to_homogeneous();
-        Ray::<T>::new(
+        Ray::new(
             Point3::origin() + origin.truncate(),
             (pixel - origin).truncate().normalize(),
         )
@@ -76,8 +74,8 @@ mod tests {
 
     #[test]
     fn new() {
-        assert_eq!(Camera::from(200, 125, FRAC_PI_2).pixel_size, 0.01);
-        assert_eq!(Camera::from(125, 200, FRAC_PI_2).pixel_size, 0.01);
+        assert_relative_eq!(Camera::from(200, 125, FRAC_PI_2).pixel_size, 0.01);
+        assert_relative_eq!(Camera::from(125, 200, FRAC_PI_2).pixel_size, 0.01);
     }
 
     #[test]

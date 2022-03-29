@@ -1,11 +1,9 @@
-use crate::light::Light;
-use crate::pattern::Pattern;
-use crate::shape::reflect;
+use crate::{light::Light, pattern::Pattern, shape::reflect};
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
 use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Constructor, Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
 pub struct Material<T> {
     pub pattern: Pattern<T>,
     pub ambient: T,
@@ -13,17 +11,22 @@ pub struct Material<T> {
     pub specular: T,
     pub shininess: T,
     pub reflective: T,
+    pub transparency: T,
+    pub refractive_index: T,
 }
 
 impl<T: BaseFloat + Default> Default for Material<T> {
     fn default() -> Material<T> {
+        let one = T::one();
         Material::<T> {
-            pattern: Pattern::Solid(RGB::new(T::one(), T::one(), T::one())),
+            pattern: Pattern::Solid(RGB::new(one, one, one)),
             ambient: T::from(0.1).unwrap(),
             diffuse: T::from(0.9).unwrap(),
             specular: T::from(0.9).unwrap(),
-            shininess: T::from(200.).unwrap(),
+            shininess: T::from(200).unwrap(),
             reflective: T::zero(),
+            transparency: T::zero(),
+            refractive_index: one,
         }
     }
 }

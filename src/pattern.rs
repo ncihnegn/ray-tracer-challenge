@@ -1,5 +1,4 @@
-use crate::material::Material;
-use crate::shape::Shape;
+use crate::{material::Material, shape::Shape};
 use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;
 use num_traits::cast;
@@ -12,6 +11,7 @@ pub enum Pattern<T> {
     Gradient(Gradient<T>),
     Ring(Ring<T>),
     Checker(Checker<T>),
+    Test(Test<T>),
 }
 
 impl<T: BaseFloat> Pattern<T> {
@@ -22,6 +22,7 @@ impl<T: BaseFloat> Pattern<T> {
             Pattern::Gradient(s) => s.at(point),
             Pattern::Ring(s) => s.at(point),
             Pattern::Checker(s) => s.at(point),
+            Pattern::Test(s) => s.at(point),
         }
     }
 }
@@ -30,7 +31,7 @@ pub trait TraitPattern<T: BaseFloat> {
     fn transform(&self) -> Matrix4<T>;
     fn at(&self, point: Point3<T>) -> RGB<T>;
 
-    fn at_object(&self, object: Shape<T>, world_point: Point3<T>) -> RGB<T> {
+    fn at_shape(&self, object: Shape<T>, world_point: Point3<T>) -> RGB<T> {
         let object_point = object.transform().invert().unwrap() * world_point.to_homogeneous();
         let pattern_point =
             Point3::from_vec((self.transform().invert().unwrap() * object_point).truncate());
@@ -133,6 +134,21 @@ impl<T: BaseFloat> TraitPattern<T> for Checker<T> {
     }
 }
 
+#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+pub struct Test<T> {
+    transform: Matrix4<T>,
+}
+
+impl<T: BaseFloat> TraitPattern<T> for Test<T> {
+    fn transform(&self) -> Matrix4<T> {
+        self.transform
+    }
+
+    fn at(&self, point: Point3<T>) -> RGB<T> {
+        RGB::new(point.x, point.y, point.z)
+    }
+}
+
 mod tests {
     use crate::shape::Sphere;
 
@@ -141,8 +157,8 @@ mod tests {
 
     #[test]
     fn at() {
-        let white = RGB::new(0., 0., 0.);
-        let black = RGB::new(1., 1., 1.);
+        let white = RGB::new(1., 1., 1.);
+        let black = RGB::new(0., 0., 0.);
         {
             let stripe = Stripe::new(white, black, Matrix4::identity());
             assert_eq!(stripe.at(Point3::origin()), white);
@@ -157,12 +173,11 @@ mod tests {
             assert_eq!(stripe.at(Point3::from_vec(Vector3::unit_x() * -1.1)), white);
         }
         {
-            // Different from the book
             let gradient = Gradient::new(white, black, Matrix4::identity());
             assert_eq!(gradient.at(Point3::origin()), white);
             assert_eq!(
                 gradient.at(Point3::new(0.25, 0., 0.)),
-                RGB::new(0.25, 0.25, 0.25)
+                RGB::new(0.75, 0.75, 0.75)
             );
             assert_eq!(
                 gradient.at(Point3::new(0.5, 0., 0.)),
@@ -170,7 +185,7 @@ mod tests {
             );
             assert_eq!(
                 gradient.at(Point3::new(0.75, 0., 0.)),
-                RGB::new(0.75, 0.75, 0.75)
+                RGB::new(0.25, 0.25, 0.25)
             );
         }
         {
@@ -191,14 +206,25 @@ mod tests {
             assert_eq!(checker.at(Point3::new(0., 0., 1.01)), black);
         }
         {
+            let test = Test::new(Matrix4::identity());
+            assert_eq!(test.at(Point3::origin()), black);
+            assert_eq!(test.at(Point3::new(1., 1., 1.)), white);
+        }
+    }
+
+    #[test]
+    fn at_shape() {
+        let white = RGB::new(1., 1., 1.);
+        let black = RGB::new(0., 0., 0.);
+        {
             let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
             let pattern = Stripe::new(white, black, Matrix4::identity());
-            assert_eq!(pattern.at_object(object, Point3::new(1.5, 0., 0.)), white);
+            assert_eq!(pattern.at_shape(object, Point3::new(1.5, 0., 0.)), white);
         }
         {
             let object = Shape::Sphere(Sphere::default());
             let pattern = Stripe::new(white, black, Matrix4::from_scale(2.));
-            assert_eq!(pattern.at_object(object, Point3::new(1.5, 0., 0.)), white);
+            assert_eq!(pattern.at_shape(object, Point3::new(1.5, 0., 0.)), white);
         }
         {
             let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
@@ -207,7 +233,23 @@ mod tests {
                 black,
                 Matrix4::from_translation(Vector3::unit_x() * 0.5),
             );
-            assert_eq!(pattern.at_object(object, Point3::new(2.5, 0., 0.)), white);
+            assert_eq!(pattern.at_shape(object, Point3::new(2.5, 0., 0.)), white);
+        }
+        {
+            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let pattern = Test::new(Matrix4::identity());
+            assert_eq!(
+                pattern.at_shape(object, Point3::new(2., 3., 4.)),
+                RGB::new(1., 1.5, 2.)
+            );
+        }
+        {
+            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let pattern = Test::new(Matrix4::from_translation(Vector3::new(0.5, 1., 1.5)));
+            assert_eq!(
+                pattern.at_shape(object, Point3::new(2.5, 3., 3.5)),
+                RGB::new(0.75, 0.5, 0.25)
+            );
         }
     }
 }
