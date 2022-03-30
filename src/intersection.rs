@@ -62,8 +62,6 @@ pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
 
 mod tests {
     use super::*;
-    use cgmath::SquareMatrix;
-    use num_traits::Float;
     use std::f32::{consts::FRAC_1_SQRT_2, EPSILON};
 
     #[test]

@@ -148,7 +148,7 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
         }
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    fn local_normal_at(&self, _point: Point3<T>) -> Vector3<T> {
         Vector3::unit_y()
     }
 }

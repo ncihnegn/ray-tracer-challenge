@@ -44,7 +44,7 @@ impl<T: BaseFloat> TraitPattern<T> for RGB<T> {
         Matrix4::identity()
     }
 
-    fn at(&self, point: Point3<T>) -> RGB<T> {
+    fn at(&self, _point: Point3<T>) -> RGB<T> {
         *self
     }
 }
