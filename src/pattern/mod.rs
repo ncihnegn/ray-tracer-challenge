@@ -59,8 +59,8 @@ impl<T: BaseFloat> TraitPattern<T> for RGB<T> {
 }
 
 mod tests {
-    use crate::shape::sphere::Sphere;
     use super::*;
+    use crate::shape::sphere::Sphere;
     use cgmath::Vector3;
 
     #[test]

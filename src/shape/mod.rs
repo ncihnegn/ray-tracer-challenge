@@ -1,3 +1,4 @@
+pub mod cube;
 pub mod plane;
 pub mod sphere;
 
@@ -5,7 +6,7 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{plane::Plane, sphere::Sphere},
+    shape::{cube::Cube, plane::Plane, sphere::Sphere},
 };
 use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
@@ -14,6 +15,7 @@ use enum_as_inner::EnumAsInner;
 
 #[derive(Clone, Copy, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
+    Cube(Cube<T>),
     Plane(Plane<T>),
     Sphere(Sphere<T>),
 }
@@ -21,6 +23,7 @@ pub enum Shape<T> {
 impl<T: BaseFloat> Shape<T> {
     pub fn transform(&self) -> Matrix4<T> {
         match self {
+            Shape::Cube(c) => c.transform(),
             Shape::Plane(p) => p.transform(),
             Shape::Sphere(s) => s.transform(),
         }
@@ -28,6 +31,7 @@ impl<T: BaseFloat> Shape<T> {
 
     pub fn material(&self) -> Material<T> {
         match self {
+            Shape::Cube(c) => c.material(),
             Shape::Plane(p) => p.material(),
             Shape::Sphere(s) => s.material(),
         }
@@ -35,6 +39,7 @@ impl<T: BaseFloat> Shape<T> {
 
     pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         match self {
+            Shape::Cube(c) => c.intersect(ray),
             Shape::Plane(p) => p.intersect(ray),
             Shape::Sphere(s) => s.intersect(ray),
         }
@@ -42,6 +47,7 @@ impl<T: BaseFloat> Shape<T> {
 
     pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
         match self {
+            Shape::Cube(c) => c.normal_at(point),
             Shape::Plane(p) => p.normal_at(point),
             Shape::Sphere(s) => s.normal_at(point),
         }
@@ -82,6 +88,30 @@ mod tests {
     use super::*;
     use cgmath::{assert_relative_eq, Rad};
     use std::f32::consts::{FRAC_1_SQRT_2, PI};
+
+    #[test]
+    fn normal_at() {
+        assert_relative_eq!(
+            Sphere::new(
+                Matrix4::from_translation(Vector3::unit_y()),
+                Material::default()
+            )
+            .normal_at(Point3::new(0., 1.70711, -0.70711))
+            .unwrap(),
+            Vector3::new(0., 0.70711, -0.70711),
+            max_relative = 0.00001,
+        );
+        assert_relative_eq!(
+            Sphere::new(
+                Matrix4::from_nonuniform_scale(1., 0.5, 1.) * Matrix4::from_angle_z(Rad(PI / 5.)),
+                Material::default()
+            )
+            .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.))
+            .unwrap(),
+            Vector3::new(0., 0.97014, -0.24254),
+            max_relative = 0.0001,
+        );
+    }
 
     #[test]
     fn reflection() {

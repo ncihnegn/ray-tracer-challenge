@@ -55,54 +55,28 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
 
 mod tests {
     use super::*;
-    use cgmath::{assert_relative_eq, Rad};
-    use std::f32::consts::PI;
+    use cgmath::assert_relative_eq;
 
     #[test]
-    fn normal() {
+    fn local_normal_at() {
         {
             let sphere = Sphere::default();
             {
                 let v = Vector3::unit_x();
-                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+                assert_eq!(sphere.local_normal_at(Point3::from_vec(v)), v);
             }
             {
                 let v = Vector3::unit_y();
-                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+                assert_eq!(sphere.local_normal_at(Point3::from_vec(v)), v);
             }
             {
                 let v = Vector3::unit_z();
-                assert_eq!(sphere.normal_at(Point3::from_vec(v)), Some(v));
+                assert_eq!(sphere.local_normal_at(Point3::from_vec(v)), v);
             }
             {
-                let d = 3.0_f32.sqrt().recip();
-                let v = Vector3::new(d, d, d);
-                assert_relative_eq!(sphere.normal_at(Point3::from_vec(v)).unwrap(), v);
+                let v = 3.0_f32.sqrt().recip() * Vector3::new(1., 1., 1.);
+                assert_relative_eq!(sphere.local_normal_at(Point3::from_vec(v)), v);
             }
-        }
-        assert_relative_eq!(
-            Sphere::new(
-                Matrix4::from_translation(Vector3::unit_y()),
-                Material::default()
-            )
-            .normal_at(Point3::new(0., 1.70711, -0.70711))
-            .unwrap(),
-            Vector3::new(0., 0.70711, -0.70711),
-            max_relative = 0.00001,
-        );
-        {
-            let t = 2.0_f32.sqrt().recip();
-            assert_relative_eq!(
-                Sphere::new(
-                    Matrix4::from_nonuniform_scale(1., 0.5, 1.)
-                        * Matrix4::from_angle_z(Rad(PI / 5.)),
-                    Material::default()
-                )
-                .normal_at(Point3::new(0., t, -t))
-                .unwrap(),
-                Vector3::new(0., 0.97014, -0.24254),
-                max_relative = 0.0001,
-            );
         }
     }
 }

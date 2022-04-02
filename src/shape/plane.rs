@@ -46,3 +46,33 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
         Vector3::unit_y()
     }
 }
+
+mod tests {
+    use super::*;
+    use cgmath::assert_relative_eq;
+
+    #[test]
+    fn local_intersect() {
+        let plane = Plane::default();
+        let shape = Shape::Plane(plane);
+        let vy = Vector3::unit_y();
+        let v = vec![Intersection::new(1., shape)];
+        assert_eq!(
+            plane.local_intersect(Ray::new(Point3::from_vec(vy), -vy)),
+            v
+        );
+        assert_eq!(
+            plane.local_intersect(Ray::new(Point3::from_vec(-vy), vy)),
+            v
+        );
+    }
+
+    #[test]
+    fn local_normal_at() {
+        let plane = Plane::default();
+        let vy = Vector3::unit_y();
+        assert_eq!(plane.local_normal_at(Point3::origin()), vy);
+        assert_eq!(plane.local_normal_at(10. * Point3::new(1., 0., -1.)), vy);
+        assert_eq!(plane.local_normal_at(Point3::new(-5., 0., 150.)), vy);
+    }
+}
