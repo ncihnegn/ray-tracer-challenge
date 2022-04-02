@@ -3,9 +3,9 @@ use crate::{
     intersection::{hit, Intersection},
     light::Light,
     material::Material,
-    pattern::{Pattern, Test},
+    pattern::{test::Test, Pattern},
     ray::Ray,
-    shape::{Plane, Shape, Sphere, TraitShape},
+    shape::{plane::Plane, sphere::Sphere, Shape, TraitShape},
 };
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;

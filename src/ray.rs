@@ -1,7 +1,7 @@
 use crate::{
     impl_approx,
     intersection::Intersection,
-    shape::{Shape, Sphere},
+    shape::{sphere::Sphere, Shape},
 };
 use cgmath::{
     AbsDiffEq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, RelativeEq, SquareMatrix,

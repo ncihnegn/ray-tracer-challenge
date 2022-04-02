@@ -2,7 +2,7 @@ use crate::{
     computation::Computation,
     material::Material,
     ray::Ray,
-    shape::{reflect, Plane, Shape, Sphere, TraitShape},
+    shape::{plane::Plane, reflect, sphere::Sphere, Shape, TraitShape},
 };
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;

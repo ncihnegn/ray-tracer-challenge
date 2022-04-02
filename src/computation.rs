@@ -65,7 +65,7 @@ mod tests {
     use crate::{
         intersection::Intersection,
         ray::Ray,
-        shape::{Shape, Sphere},
+        shape::{sphere::Sphere, Shape},
     };
 
     use super::*;
