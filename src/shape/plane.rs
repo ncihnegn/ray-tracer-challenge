@@ -4,7 +4,9 @@ use crate::{
     ray::Ray,
     shape::{Shape, TraitShape},
 };
-use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
+use cgmath::{
+    abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
+};
 use derive_more::Constructor;
 
 #[derive(Clone, Constructor, Copy, Debug, PartialEq)]
@@ -32,7 +34,7 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        if ray.direction.y.abs() < T::epsilon() {
+        if abs_diff_eq!(ray.direction.y, T::zero()) {
             Vec::new()
         } else {
             vec![Intersection::new(

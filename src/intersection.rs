@@ -133,21 +133,16 @@ mod tests {
             );
         }
         {
+            let vz = Vector3::unit_z();
             let mut material = Material::default();
             material.transparency = 1.;
             material.refractive_index = 1.5;
             let a = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), material));
             material.refractive_index = 2.;
-            let b = Shape::Sphere(Sphere::new(
-                Matrix4::from_translation(Vector3::unit_z() * -0.25),
-                material,
-            ));
+            let b = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * -0.25), material));
             material.refractive_index = 2.5;
-            let c = Shape::Sphere(Sphere::new(
-                Matrix4::from_translation(Vector3::unit_z() * 0.25),
-                material,
-            ));
-            let r = Ray::new(Point3::from_vec(Vector3::unit_z() * -4.), Vector3::unit_z());
+            let c = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * 0.25), material));
+            let r = Ray::new(Point3::from_vec(vz * -4.), vz);
             let xs = vec![
                 Intersection::new(2., a),
                 Intersection::new(2.75, b),

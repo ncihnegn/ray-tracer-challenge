@@ -37,7 +37,7 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
         let two = T::from(2).unwrap();
         let b = ray.direction.dot(sphere_to_ray) * two;
         let c = sphere_to_ray.dot(sphere_to_ray) - T::one();
-        let discriminant = b * b - T::from(4).unwrap() * a * c;
+        let discriminant = b.powi(2) - T::from(4).unwrap() * a * c;
         match discriminant {
             d if d > T::zero() => vec![
                 Intersection::new((-b - d.sqrt()) / (two * a), Shape::Sphere(*self)),

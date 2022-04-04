@@ -33,7 +33,7 @@ impl<T: BaseFloat> Computation<T> {
     }
 
     pub fn sin2_t(&self) -> T {
-        self.n_ratio() * self.n_ratio() * (T::one() - self.cos_i() * self.cos_i())
+        self.n_ratio().powi(2) * (T::one() - self.cos_i().powi(2))
     }
 
     pub fn cos_t(&self) -> T {
@@ -42,10 +42,8 @@ impl<T: BaseFloat> Computation<T> {
 
     pub fn schlick(&self) -> T {
         let one = T::one();
-        if self.n1 > self.n2 {
-            if self.sin2_t() > T::one() {
-                return one;
-            }
+        if self.n1 > self.n2 && self.sin2_t() > T::one() {
+            return one;
         }
         let cos = if self.n1 > self.n2 {
             self.cos_t()
@@ -53,8 +51,8 @@ impl<T: BaseFloat> Computation<T> {
             self.cos_i()
         };
         let r0_t = (self.n1 - self.n2) / (self.n1 + self.n2);
-        let r0 = r0_t * r0_t;
-        r0 + (one - r0) * (one - cos).powf(T::from(5).unwrap())
+        let r0 = r0_t.powi(2);
+        r0 + (one - r0) * (one - cos).powi(5)
     }
 }
 

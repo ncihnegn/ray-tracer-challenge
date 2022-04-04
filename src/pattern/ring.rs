@@ -17,7 +17,7 @@ impl<T: BaseFloat> TraitPattern<T> for Ring<T> {
     }
 
     fn at(&self, point: Point3<T>) -> RGB<T> {
-        let i: i32 = cast((point.x * point.x + point.z * point.z).sqrt().floor()).unwrap();
+        let i: i32 = cast((point.x.powi(2) + point.z.powi(2)).sqrt().floor()).unwrap();
         if i % 2 == 0 {
             self.a
         } else {

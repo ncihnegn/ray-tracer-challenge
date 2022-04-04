@@ -1,4 +1,5 @@
 pub mod cube;
+pub mod cylinder;
 pub mod plane;
 pub mod sphere;
 
@@ -6,7 +7,7 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{cube::Cube, plane::Plane, sphere::Sphere},
+    shape::{cube::Cube, cylinder::Cylinder, plane::Plane, sphere::Sphere},
 };
 use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
@@ -16,6 +17,7 @@ use enum_as_inner::EnumAsInner;
 #[derive(Clone, Copy, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
     Cube(Cube<T>),
+    Cylinder(Cylinder<T>),
     Plane(Plane<T>),
     Sphere(Sphere<T>),
 }
@@ -24,6 +26,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn transform(&self) -> Matrix4<T> {
         match self {
             Shape::Cube(c) => c.transform(),
+            Shape::Cylinder(c) => c.transform(),
             Shape::Plane(p) => p.transform(),
             Shape::Sphere(s) => s.transform(),
         }
@@ -32,6 +35,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn material(&self) -> Material<T> {
         match self {
             Shape::Cube(c) => c.material(),
+            Shape::Cylinder(c) => c.material(),
             Shape::Plane(p) => p.material(),
             Shape::Sphere(s) => s.material(),
         }
@@ -40,6 +44,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         match self {
             Shape::Cube(c) => c.intersect(ray),
+            Shape::Cylinder(c) => c.intersect(ray),
             Shape::Plane(p) => p.intersect(ray),
             Shape::Sphere(s) => s.intersect(ray),
         }
@@ -48,6 +53,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
         match self {
             Shape::Cube(c) => c.normal_at(point),
+            Shape::Cylinder(c) => c.normal_at(point),
             Shape::Plane(p) => p.normal_at(point),
             Shape::Sphere(s) => s.normal_at(point),
         }
