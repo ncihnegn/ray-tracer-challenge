@@ -5,12 +5,13 @@ use crate::{
     shape::{Shape, TraitShape},
 };
 use cgmath::{
-    abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
+    abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
+    Vector3,
 };
 use derive_more::Constructor;
 use std::fmt::Debug;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Cone<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -39,14 +40,13 @@ fn check_cap<T: BaseFloat>(ray: Ray<T>, t: T, radius: T) -> bool {
 
 impl<T: BaseFloat> Cone<T> {
     fn intersect_caps(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        if !self.closed || abs_diff_eq!(ray.direction.y, T::zero()) {
-            return vec![];
-        }
         let mut xs = Vec::new();
-        for m in [self.minimum, self.maximum] {
-            let t = (m - ray.origin.y) / ray.direction.y;
-            if check_cap(ray, t, m) {
-                xs.push(Intersection::new(t, Shape::Cone(*self)));
+        if self.closed && abs_diff_ne!(ray.direction.y, T::zero()) {
+            for m in [self.minimum, self.maximum] {
+                let t = (m - ray.origin.y) / ray.direction.y;
+                if check_cap(ray, t, m) {
+                    xs.push(Intersection::new(t, Shape::Cone(self.clone())));
+                }
             }
         }
         xs
@@ -58,8 +58,8 @@ impl<T: BaseFloat + Debug> TraitShape<T> for Cone<T> {
         self.transform
     }
 
-    fn material(&self) -> Material<T> {
-        self.material
+    fn material(&self) -> Option<Material<T>> {
+        Some(self.material)
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -71,7 +71,7 @@ impl<T: BaseFloat + Debug> TraitShape<T> for Cone<T> {
         let c = ray.origin.x.powi(2) - ray.origin.y.powi(2) + ray.origin.z.powi(2);
         let mut xs = Vec::new();
         if abs_diff_eq!(a, T::zero()) && !abs_diff_eq!(b, T::zero()) {
-            xs.push(Intersection::new(-c / (two * b), Shape::Cone(*self)));
+            xs.push(Intersection::new(-c / (two * b), Shape::Cone(self.clone())));
         } else {
             let disc = b.powi(2) - T::from(4).unwrap() * a * c;
             if disc < T::zero() {
@@ -81,11 +81,11 @@ impl<T: BaseFloat + Debug> TraitShape<T> for Cone<T> {
             let t1 = (-b + disc.sqrt()) / (two * a);
             let y0 = ray.origin.y + t0 * ray.direction.y;
             if self.minimum < y0 && y0 < self.maximum {
-                xs.push(Intersection::new(t0, Shape::Cone(*self)));
+                xs.push(Intersection::new(t0, Shape::Cone(self.clone())));
             }
             let y1 = ray.origin.y + t1 * ray.direction.y;
             if self.minimum < y1 && y1 < self.maximum {
-                xs.push(Intersection::new(t1, Shape::Cone(*self)));
+                xs.push(Intersection::new(t1, Shape::Cone(self.clone())));
             }
         }
         xs.append(&mut self.intersect_caps(ray));
@@ -116,7 +116,7 @@ mod tests {
     fn local_intersect() {
         {
             let cone = Cone::default();
-            let shape = Shape::Cone(cone);
+            let shape = Shape::Cone(cone.clone());
             assert_relative_eq!(
                 cone.local_intersect(Ray::new(
                     Point3::new(0., 0., -1.),
@@ -130,7 +130,10 @@ mod tests {
             );
             assert_eq!(
                 cone.local_intersect(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
-                vec![Intersection::new(5., shape), Intersection::new(5., shape)]
+                vec![
+                    Intersection::new(5., shape.clone()),
+                    Intersection::new(5., shape)
+                ]
             );
             assert_relative_eq!(
                 cone.local_intersect(Ray::new(

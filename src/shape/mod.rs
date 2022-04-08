@@ -1,6 +1,7 @@
 pub mod cone;
 pub mod cube;
 pub mod cylinder;
+pub mod group;
 pub mod plane;
 pub mod sphere;
 
@@ -8,18 +9,21 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{cone::Cone, cube::Cube, cylinder::Cylinder, plane::Plane, sphere::Sphere},
+    shape::{
+        cone::Cone, cube::Cube, cylinder::Cylinder, group::Group, plane::Plane, sphere::Sphere,
+    },
 };
 use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
 };
 use enum_as_inner::EnumAsInner;
 
-#[derive(Clone, Copy, Debug, EnumAsInner, PartialEq)]
+#[derive(Clone, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
     Cone(Cone<T>),
     Cube(Cube<T>),
     Cylinder(Cylinder<T>),
+    Group(Group<T>),
     Plane(Plane<T>),
     Sphere(Sphere<T>),
 }
@@ -30,16 +34,18 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cone(c) => c.transform(),
             Shape::Cube(c) => c.transform(),
             Shape::Cylinder(c) => c.transform(),
+            Shape::Group(g) => g.transform(),
             Shape::Plane(p) => p.transform(),
             Shape::Sphere(s) => s.transform(),
         }
     }
 
-    pub fn material(&self) -> Material<T> {
+    pub fn material(&self) -> Option<Material<T>> {
         match self {
             Shape::Cone(c) => c.material(),
             Shape::Cube(c) => c.material(),
             Shape::Cylinder(c) => c.material(),
+            Shape::Group(g) => g.material(),
             Shape::Plane(p) => p.material(),
             Shape::Sphere(s) => s.material(),
         }
@@ -50,6 +56,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cone(c) => c.intersect(ray),
             Shape::Cube(c) => c.intersect(ray),
             Shape::Cylinder(c) => c.intersect(ray),
+            Shape::Group(g) => g.intersect(ray),
             Shape::Plane(p) => p.intersect(ray),
             Shape::Sphere(s) => s.intersect(ray),
         }
@@ -60,15 +67,27 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cone(c) => c.normal_at(point),
             Shape::Cube(c) => c.normal_at(point),
             Shape::Cylinder(c) => c.normal_at(point),
+            Shape::Group(g) => g.normal_at(point),
             Shape::Plane(p) => p.normal_at(point),
             Shape::Sphere(s) => s.normal_at(point),
+        }
+    }
+
+    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+        match self {
+            Shape::Cone(c) => c.local_normal_at(point),
+            Shape::Cube(c) => c.local_normal_at(point),
+            Shape::Cylinder(c) => c.local_normal_at(point),
+            Shape::Group(g) => g.local_normal_at(point),
+            Shape::Plane(p) => p.local_normal_at(point),
+            Shape::Sphere(s) => s.local_normal_at(point),
         }
     }
 }
 
 pub trait TraitShape<T: BaseFloat> {
     fn transform(&self) -> Matrix4<T>;
-    fn material(&self) -> Material<T>;
+    fn material(&self) -> Option<Material<T>>;
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>>;
     fn local_normal_at(&self, point: Point3<T>) -> Vector3<T>;
 
@@ -106,7 +125,7 @@ mod tests {
         assert_relative_eq!(
             Sphere::new(
                 Matrix4::from_translation(Vector3::unit_y()),
-                Material::default()
+                Material::default(),
             )
             .normal_at(Point3::new(0., 1.70711, -0.70711))
             .unwrap(),
@@ -116,7 +135,7 @@ mod tests {
         assert_relative_eq!(
             Sphere::new(
                 Matrix4::from_nonuniform_scale(1., 0.5, 1.) * Matrix4::from_angle_z(Rad(PI / 5.)),
-                Material::default()
+                Material::default(),
             )
             .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.))
             .unwrap(),

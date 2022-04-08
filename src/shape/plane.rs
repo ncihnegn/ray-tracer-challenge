@@ -9,7 +9,7 @@ use cgmath::{
 };
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Plane<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -29,8 +29,8 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
         self.transform
     }
 
-    fn material(&self) -> Material<T> {
-        self.material
+    fn material(&self) -> Option<Material<T>> {
+        Some(self.material)
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -39,7 +39,7 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
         } else {
             vec![Intersection::new(
                 -ray.origin.y / ray.direction.y,
-                Shape::Plane(*self),
+                Shape::Plane(self.clone()),
             )]
         }
     }
@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn local_intersect() {
         let plane = Plane::default();
-        let shape = Shape::Plane(plane);
+        let shape = Shape::Plane(plane.clone());
         let vy = Vector3::unit_y();
         let v = vec![Intersection::new(1., shape)];
         assert_eq!(

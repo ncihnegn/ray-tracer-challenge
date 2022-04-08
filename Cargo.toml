@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 approx = "*"
 cgmath = "*"
+derivative = "*"
 derive_more = "*"
 enum-as-inner = "*"
 num-traits = "*"

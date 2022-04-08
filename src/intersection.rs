@@ -7,7 +7,7 @@ use crate::{
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Intersection<T> {
     pub t: T,
     pub object: Shape<T>,
@@ -26,21 +26,25 @@ impl<T: BaseFloat> Intersection<T> {
             let mut containers = Vec::<Shape<T>>::new();
             for i in xs {
                 if self == i {
-                    n1 = containers.last().map(|i| i.material().refractive_index);
+                    n1 = containers
+                        .last()
+                        .map(|i| i.material().unwrap().refractive_index);
                 }
-                if let Some(index) = containers.iter().position(|&x| x == i.object) {
+                if let Some(index) = containers.iter().position(|x| *x == i.object) {
                     containers.remove(index);
                 } else {
-                    containers.push(i.object);
+                    containers.push(i.object.clone());
                 }
                 if self == i {
-                    n2 = containers.last().map(|i| i.material().refractive_index);
+                    n2 = containers
+                        .last()
+                        .map(|i| i.material().unwrap().refractive_index);
                     break;
                 }
             }
             Computation::new(
                 self.t,
-                self.object,
+                self.object.clone(),
                 point,
                 eyev,
                 normalv,
@@ -66,24 +70,24 @@ mod tests {
 
     #[test]
     fn hit() {
-        let sphere = Shape::Sphere(Sphere::new(Matrix4::identity(), Material::default()));
+        let sphere = Shape::Sphere(Sphere::default());
         {
             // All have positive t
-            let i1 = Intersection::new(1., sphere);
+            let i1 = Intersection::new(1., sphere.clone());
             assert_eq!(
-                super::hit(&vec![i1, Intersection::new(2., sphere)]),
-                Some(i1)
+                super::hit(&vec![i1.clone(), Intersection::new(2., sphere.clone())]),
+                Some(i1.clone())
             );
             // Some have negative t
             assert_eq!(
-                super::hit(&vec![Intersection::new(-1., sphere), i1]),
+                super::hit(&vec![Intersection::new(-1., sphere.clone()), i1.clone()]),
                 Some(i1)
             );
         }
         // All have negative t
         assert_eq!(
             super::hit(&vec![
-                Intersection::new(-2., sphere),
+                Intersection::new(-2., sphere.clone()),
                 Intersection::new(-1., sphere)
             ]),
             None
@@ -100,7 +104,7 @@ mod tests {
                 Material::default(),
             ));
             let i = Intersection::new(5., shape);
-            let xs = vec![i];
+            let xs = vec![i.clone()];
             let comps = i.precompute(r, &xs).unwrap();
             assert!(comps.over_point().z < EPSILON / 2.);
             assert!(comps.point.z > comps.over_point().z);
@@ -108,11 +112,11 @@ mod tests {
             assert!(comps.point.z < comps.under_point().z);
         }
         {
-            let object = Shape::Sphere(Sphere::new(Matrix4::identity(), Material::default()));
+            let object = Shape::Sphere(Sphere::default());
             let vz = Vector3::unit_z();
             let point = Point3::from_vec(vz);
-            let i = Intersection::new(1., object);
-            let xs = vec![i];
+            let i = Intersection::new(1., object.clone());
+            let xs = vec![i.clone()];
             assert_eq!(
                 i.precompute(Ray::new(Point3::origin(), vz), &xs).unwrap(),
                 Computation::new(1., object, point, -vz, -vz, true, -vz, 1., 1.)
@@ -125,7 +129,7 @@ mod tests {
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
             let i = Intersection::new(2.0_f32.sqrt(), Shape::Plane(shape));
-            let xs = vec![i];
+            let xs = vec![i.clone()];
             let comps = i.precompute(r, &xs).unwrap();
             assert_eq!(
                 comps.reflectv,
@@ -144,9 +148,9 @@ mod tests {
             let c = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * 0.25), material));
             let r = Ray::new(Point3::from_vec(vz * -4.), vz);
             let xs = vec![
-                Intersection::new(2., a),
-                Intersection::new(2.75, b),
-                Intersection::new(3.25, c),
+                Intersection::new(2., a.clone()),
+                Intersection::new(2.75, b.clone()),
+                Intersection::new(3.25, c.clone()),
                 Intersection::new(4.75, b),
                 Intersection::new(5.25, c),
                 Intersection::new(6., a),
@@ -154,7 +158,7 @@ mod tests {
             let n1s = vec![1., 1.5, 2., 2.5, 2.5, 1.5];
             let n2s = vec![1.5, 2., 2.5, 2.5, 1.5, 1.];
             for index in 0..=5 {
-                let i = xs[index];
+                let i = xs[index].clone();
                 let comps = i.precompute(r, &xs).unwrap();
                 assert_eq!(comps.n1, n1s[index]);
                 assert_eq!(comps.n2, n2s[index]);

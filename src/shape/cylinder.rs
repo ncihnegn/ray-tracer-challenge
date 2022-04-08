@@ -5,11 +5,12 @@ use crate::{
     shape::{Shape, TraitShape},
 };
 use cgmath::{
-    abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
+    abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
+    Vector3,
 };
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Cylinder<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -39,13 +40,12 @@ fn check_cap<T: BaseFloat>(ray: Ray<T>, t: T) -> bool {
 impl<T: BaseFloat> Cylinder<T> {
     fn intersect_caps(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let mut xs = Vec::new();
-        if !self.closed || abs_diff_eq!(ray.direction.y, T::zero()) {
-            return xs;
-        }
-        for m in [self.minimum, self.maximum] {
-            let t = (m - ray.origin.y) / ray.direction.y;
-            if check_cap(ray, t) {
-                xs.push(Intersection::new(t, Shape::Cylinder(*self)));
+        if self.closed && abs_diff_ne!(ray.direction.y, T::zero()) {
+            for m in [self.minimum, self.maximum] {
+                let t = (m - ray.origin.y) / ray.direction.y;
+                if check_cap(ray, t) {
+                    xs.push(Intersection::new(t, Shape::Cylinder(self.clone())));
+                }
             }
         }
         xs
@@ -57,8 +57,8 @@ impl<T: BaseFloat> TraitShape<T> for Cylinder<T> {
         self.transform
     }
 
-    fn material(&self) -> Material<T> {
-        self.material
+    fn material(&self) -> Option<Material<T>> {
+        Some(self.material)
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -78,11 +78,11 @@ impl<T: BaseFloat> TraitShape<T> for Cylinder<T> {
                 let mut xs = Vec::new();
                 let y0 = ray.origin.y + t0 * ray.direction.y;
                 if self.minimum < y0 && y0 < self.maximum {
-                    xs.push(Intersection::new(t0, Shape::Cylinder(*self)));
+                    xs.push(Intersection::new(t0, Shape::Cylinder(self.clone())));
                 }
                 let y1 = ray.origin.y + t1 * ray.direction.y;
                 if self.minimum < y1 && y1 < self.maximum {
-                    xs.push(Intersection::new(t1, Shape::Cylinder(*self)));
+                    xs.push(Intersection::new(t1, Shape::Cylinder(self.clone())));
                 }
                 xs.append(&mut self.intersect_caps(ray));
                 xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
@@ -114,7 +114,7 @@ mod tests {
     fn local_intersect() {
         {
             let cylinder = Cylinder::default();
-            let shape = Shape::Cylinder(cylinder);
+            let shape = Shape::Cylinder(cylinder.clone());
             assert_eq!(
                 cylinder.local_intersect(Ray::new(Point3::new(1., 0., 0.), Vector3::unit_y())),
                 vec![]
@@ -132,11 +132,17 @@ mod tests {
             );
             assert_eq!(
                 cylinder.local_intersect(Ray::new(Point3::new(1., 0., -5.), Vector3::unit_z())),
-                vec![Intersection::new(5., shape), Intersection::new(5., shape)]
+                vec![
+                    Intersection::new(5., shape.clone()),
+                    Intersection::new(5., shape.clone())
+                ]
             );
             assert_eq!(
                 cylinder.local_intersect(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape)
+                ]
             );
             assert_relative_eq!(
                 cylinder

@@ -7,7 +7,7 @@ use crate::{
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Cube<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -45,8 +45,8 @@ impl<T: BaseFloat> TraitShape<T> for Cube<T> {
         self.transform
     }
 
-    fn material(&self) -> Material<T> {
-        self.material
+    fn material(&self) -> Option<Material<T>> {
+        Some(self.material)
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -57,8 +57,8 @@ impl<T: BaseFloat> TraitShape<T> for Cube<T> {
         let tmax = xtmax.min(ytmax).min(ztmax);
         if tmin < tmax {
             vec![
-                Intersection::new(tmin, Shape::Cube(*self)),
-                Intersection::new(tmax, Shape::Cube(*self)),
+                Intersection::new(tmin, Shape::Cube(self.clone())),
+                Intersection::new(tmax, Shape::Cube(self.clone())),
             ]
         } else {
             vec![]
@@ -85,54 +85,75 @@ mod tests {
     #[test]
     fn local_intersect() {
         let cube = Cube::default();
-        let shape = Shape::Cube(cube);
+        let shape = Shape::Cube(cube.clone());
         {
             let ray = Ray::new(Point3::new(5., 0.5, 0.), -Vector3::unit_x());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(-5., 0.5, 0.), Vector3::unit_x());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(0.5, 5., 0.), -Vector3::unit_y());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(0.5, -5., 0.), Vector3::unit_y());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(0.5, 0., 5.), -Vector3::unit_z());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(0.5, 0., -5.), Vector3::unit_z());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(4., shape), Intersection::new(6., shape)]
+                vec![
+                    Intersection::new(4., shape.clone()),
+                    Intersection::new(6., shape.clone())
+                ]
             );
         }
         {
             let ray = Ray::new(Point3::new(0., 0.5, 0.), Vector3::unit_z());
             assert_eq!(
                 cube.local_intersect(ray),
-                vec![Intersection::new(-1., shape), Intersection::new(1., shape)]
+                vec![
+                    Intersection::new(-1., shape.clone()),
+                    Intersection::new(1., shape)
+                ]
             );
         }
         {

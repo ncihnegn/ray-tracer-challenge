@@ -7,7 +7,7 @@ use crate::{
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Sphere<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -27,8 +27,8 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
         self.transform
     }
 
-    fn material(&self) -> Material<T> {
-        self.material
+    fn material(&self) -> Option<Material<T>> {
+        Some(self.material)
     }
 
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -40,10 +40,13 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
         let discriminant = b.powi(2) - T::from(4).unwrap() * a * c;
         match discriminant {
             d if d > T::zero() => vec![
-                Intersection::new((-b - d.sqrt()) / (two * a), Shape::Sphere(*self)),
-                Intersection::new((-b + d.sqrt()) / (two * a), Shape::Sphere(*self)),
+                Intersection::new((-b - d.sqrt()) / (two * a), Shape::Sphere(self.clone())),
+                Intersection::new((-b + d.sqrt()) / (two * a), Shape::Sphere(self.clone())),
             ],
-            d if d == T::zero() => vec![Intersection::new(-b / (two * a), Shape::Sphere(*self))],
+            d if d == T::zero() => vec![Intersection::new(
+                -b / (two * a),
+                Shape::Sphere(self.clone()),
+            )],
             _ => vec![],
         }
     }

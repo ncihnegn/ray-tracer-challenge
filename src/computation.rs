@@ -2,7 +2,7 @@ use crate::shape::Shape;
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
 use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Computation<T> {
     pub t: T,
     pub object: Shape<T>,
@@ -42,17 +42,18 @@ impl<T: BaseFloat> Computation<T> {
 
     pub fn schlick(&self) -> T {
         let one = T::one();
-        if self.n1 > self.n2 && self.sin2_t() > T::one() {
-            return one;
-        }
-        let cos = if self.n1 > self.n2 {
-            self.cos_t()
+        if self.n1 > self.n2 && self.sin2_t() > one {
+            one
         } else {
-            self.cos_i()
-        };
-        let r0_t = (self.n1 - self.n2) / (self.n1 + self.n2);
-        let r0 = r0_t.powi(2);
-        r0 + (one - r0) * (one - cos).powi(5)
+            let cos = if self.n1 > self.n2 {
+                self.cos_t()
+            } else {
+                self.cos_i()
+            };
+            let r0_t = (self.n1 - self.n2) / (self.n1 + self.n2);
+            let r0 = r0_t.powi(2);
+            r0 + (one - r0) * (one - cos).powi(5)
+        }
     }
 }
 
@@ -77,15 +78,18 @@ mod tests {
         {
             let r = Ray::new(Point3::new(0., 0., FRAC_1_SQRT_2), Vector3::unit_y());
             let xs = vec![
-                Intersection::new(-FRAC_1_SQRT_2, shape),
-                Intersection::new(FRAC_1_SQRT_2, shape),
+                Intersection::new(-FRAC_1_SQRT_2, shape.clone()),
+                Intersection::new(FRAC_1_SQRT_2, shape.clone()),
             ];
             let comps = xs[1].precompute(r, &xs).unwrap();
             assert_eq!(comps.schlick(), 1.0);
         }
         {
             let r = Ray::new(Point3::origin(), Vector3::unit_y());
-            let xs = vec![Intersection::new(-1., shape), Intersection::new(1., shape)];
+            let xs = vec![
+                Intersection::new(-1., shape.clone()),
+                Intersection::new(1., shape.clone()),
+            ];
             let comps = xs[1].precompute(r, &xs).unwrap();
             assert_relative_eq!(comps.schlick(), 0.04);
         }
