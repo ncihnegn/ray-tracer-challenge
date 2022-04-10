@@ -5,7 +5,7 @@ use crate::{
     material::Material,
     pattern::{test::Test, Pattern},
     ray::Ray,
-    shape::{plane::Plane, sphere::Sphere, Shape, TraitShape},
+    shape::{plane::Plane, sphere::Sphere, Shape},
 };
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;

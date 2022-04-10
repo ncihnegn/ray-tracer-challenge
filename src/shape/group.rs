@@ -1,9 +1,4 @@
-use crate::{
-    intersection::Intersection,
-    material::Material,
-    ray::Ray,
-    shape::{Shape, TraitShape},
-};
+use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
 use cgmath::{
     abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix,
     Vector3,
@@ -31,9 +26,10 @@ impl<T: BaseFloat> ShapeWrapper<T> {
             weak.upgrade()
                 .map_or(pp, |rc| rc.borrow().world_to_object(point))
         });
-        self.shape.transform().invert().and_then(|i| {
-            o.map(|p| Point3::from_vec((i * p.to_homogeneous()).truncate()))
-        })
+        self.shape
+            .transform()
+            .invert()
+            .and_then(|i| o.map(|p| Point3::from_vec((i * p.to_homogeneous()).truncate())))
     }
 
     fn normal_to_world(&self, normal: Vector3<T>) -> Option<Vector3<T>> {
@@ -86,16 +82,16 @@ impl<T: BaseFloat + Default> Default for Group<T> {
     }
 }
 
-impl<T: BaseFloat + Debug> TraitShape<T> for Group<T> {
-    fn transform(&self) -> Matrix4<T> {
+impl<T: BaseFloat + Debug> Group<T> {
+    pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    fn material(&self) -> Option<Material<T>> {
+    pub fn material(&self) -> Option<Material<T>> {
         None
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let mut xs = self
             .children
             .iter()
@@ -105,7 +101,7 @@ impl<T: BaseFloat + Debug> TraitShape<T> for Group<T> {
         xs
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         Vector3::unit_x()
     }
 }
@@ -193,8 +189,6 @@ mod tests {
             assert_eq!(
                 rc.borrow()
                     .shape
-                    .as_group()
-                    .unwrap()
                     .intersect(Ray::new(Point3::new(10., 0., -10.), Vector3::unit_z()))
                     .len(),
                 2

@@ -1,9 +1,4 @@
-use crate::{
-    intersection::Intersection,
-    material::Material,
-    ray::Ray,
-    shape::{Shape, TraitShape},
-};
+use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
 use cgmath::{
     abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
     Vector3,
@@ -52,16 +47,16 @@ impl<T: BaseFloat> Cylinder<T> {
     }
 }
 
-impl<T: BaseFloat> TraitShape<T> for Cylinder<T> {
-    fn transform(&self) -> Matrix4<T> {
+impl<T: BaseFloat> Cylinder<T> {
+    pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    fn material(&self) -> Option<Material<T>> {
+    pub fn material(&self) -> Option<Material<T>> {
         Some(self.material)
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let two = T::from(2).unwrap();
         let a = ray.direction.x.powi(2) + ray.direction.z.powi(2);
         if abs_diff_eq!(a, T::zero()) {
@@ -91,7 +86,7 @@ impl<T: BaseFloat> TraitShape<T> for Cylinder<T> {
         }
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         let dist = point.x.powi(2) + point.z.powi(2);
         if dist < T::one() && abs_diff_eq!(point.y, self.maximum) {
             Vector3::unit_y()

@@ -1,9 +1,4 @@
-use crate::{
-    intersection::Intersection,
-    material::Material,
-    ray::Ray,
-    shape::{Shape, TraitShape},
-};
+use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
 use cgmath::{
     abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };
@@ -24,16 +19,16 @@ impl<T: BaseFloat + Default> Default for Plane<T> {
     }
 }
 
-impl<T: BaseFloat> TraitShape<T> for Plane<T> {
-    fn transform(&self) -> Matrix4<T> {
+impl<T: BaseFloat> Plane<T> {
+    pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    fn material(&self) -> Option<Material<T>> {
+    pub fn material(&self) -> Option<Material<T>> {
         Some(self.material)
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         if abs_diff_eq!(ray.direction.y, T::zero()) {
             Vec::new()
         } else {
@@ -44,7 +39,7 @@ impl<T: BaseFloat> TraitShape<T> for Plane<T> {
         }
     }
 
-    fn local_normal_at(&self, _point: Point3<T>) -> Vector3<T> {
+    pub fn local_normal_at(&self, _point: Point3<T>) -> Vector3<T> {
         Vector3::unit_y()
     }
 }

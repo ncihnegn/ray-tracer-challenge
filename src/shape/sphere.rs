@@ -1,9 +1,4 @@
-use crate::{
-    intersection::Intersection,
-    material::Material,
-    ray::Ray,
-    shape::{Shape, TraitShape},
-};
+use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
@@ -22,16 +17,16 @@ impl<T: BaseFloat + Default> Default for Sphere<T> {
     }
 }
 
-impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
-    fn transform(&self) -> Matrix4<T> {
+impl<T: BaseFloat> Sphere<T> {
+    pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    fn material(&self) -> Option<Material<T>> {
+    pub fn material(&self) -> Option<Material<T>> {
         Some(self.material)
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let sphere_to_ray = ray.origin.to_vec();
         let a = ray.direction.dot(ray.direction);
         let two = T::from(2).unwrap();
@@ -51,7 +46,7 @@ impl<T: BaseFloat> TraitShape<T> for Sphere<T> {
         }
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         point.to_vec()
     }
 }

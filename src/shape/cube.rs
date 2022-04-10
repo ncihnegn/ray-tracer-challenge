@@ -1,9 +1,4 @@
-use crate::{
-    intersection::Intersection,
-    material::Material,
-    ray::Ray,
-    shape::{Shape, TraitShape},
-};
+use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
@@ -40,16 +35,16 @@ fn check_axis<T: BaseFloat>(origin: T, direction: T) -> (T, T) {
     }
 }
 
-impl<T: BaseFloat> TraitShape<T> for Cube<T> {
-    fn transform(&self) -> Matrix4<T> {
+impl<T: BaseFloat> Cube<T> {
+    pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    fn material(&self) -> Option<Material<T>> {
+    pub fn material(&self) -> Option<Material<T>> {
         Some(self.material)
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x);
         let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y);
         let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z);
@@ -65,7 +60,7 @@ impl<T: BaseFloat> TraitShape<T> for Cube<T> {
         }
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         let maxc = point.x.abs().max(point.y.abs()).max(point.z.abs());
         if maxc == point.x.abs() {
             Vector3::unit_x() * point.x

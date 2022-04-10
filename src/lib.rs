@@ -1,3 +1,4 @@
+mod bounds;
 mod camera;
 mod canvas;
 mod computation;

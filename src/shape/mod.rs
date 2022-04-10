@@ -45,31 +45,9 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cone(c) => c.material(),
             Shape::Cube(c) => c.material(),
             Shape::Cylinder(c) => c.material(),
-            Shape::Group(g) => g.material(),
+            Shape::Group(g) => None,
             Shape::Plane(p) => p.material(),
             Shape::Sphere(s) => s.material(),
-        }
-    }
-
-    pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        match self {
-            Shape::Cone(c) => c.intersect(ray),
-            Shape::Cube(c) => c.intersect(ray),
-            Shape::Cylinder(c) => c.intersect(ray),
-            Shape::Group(g) => g.intersect(ray),
-            Shape::Plane(p) => p.intersect(ray),
-            Shape::Sphere(s) => s.intersect(ray),
-        }
-    }
-
-    pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
-        match self {
-            Shape::Cone(c) => c.normal_at(point),
-            Shape::Cube(c) => c.normal_at(point),
-            Shape::Cylinder(c) => c.normal_at(point),
-            Shape::Group(g) => g.normal_at(point),
-            Shape::Plane(p) => p.normal_at(point),
-            Shape::Sphere(s) => s.normal_at(point),
         }
     }
 
@@ -83,15 +61,19 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Sphere(s) => s.local_normal_at(point),
         }
     }
-}
 
-pub trait TraitShape<T: BaseFloat> {
-    fn transform(&self) -> Matrix4<T>;
-    fn material(&self) -> Option<Material<T>>;
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>>;
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T>;
+    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        match self {
+            Shape::Cone(c) => c.local_intersect(ray),
+            Shape::Cube(c) => c.local_intersect(ray),
+            Shape::Cylinder(c) => c.local_intersect(ray),
+            Shape::Group(g) => g.local_intersect(ray),
+            Shape::Plane(p) => p.local_intersect(ray),
+            Shape::Sphere(s) => s.local_intersect(ray),
+        }
+    }
 
-    fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+    pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         if let Some(i) = self.transform().invert() {
             self.local_intersect(ray.transform(i))
         } else {
@@ -99,7 +81,7 @@ pub trait TraitShape<T: BaseFloat> {
         }
     }
 
-    fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
+    pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
         self.transform().invert().map(|i| {
             (i.transpose()
                 * self
@@ -123,20 +105,20 @@ mod tests {
     #[test]
     fn normal_at() {
         assert_relative_eq!(
-            Sphere::new(
+            Shape::Sphere(Sphere::new(
                 Matrix4::from_translation(Vector3::unit_y()),
                 Material::default(),
-            )
+            ))
             .normal_at(Point3::new(0., 1.70711, -0.70711))
             .unwrap(),
             Vector3::new(0., 0.70711, -0.70711),
             max_relative = 0.00001,
         );
         assert_relative_eq!(
-            Sphere::new(
+            Shape::Sphere(Sphere::new(
                 Matrix4::from_nonuniform_scale(1., 0.5, 1.) * Matrix4::from_angle_z(Rad(PI / 5.)),
                 Material::default(),
-            )
+            ))
             .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.))
             .unwrap(),
             Vector3::new(0., 0.97014, -0.24254),
