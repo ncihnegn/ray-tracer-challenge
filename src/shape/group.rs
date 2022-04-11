@@ -23,7 +23,7 @@ pub struct ShapeWrapper<T> {
 }
 
 impl<T: BaseFloat> ShapeWrapper<T> {
-    fn world_to_object(&self, point: Point3<T>) -> Option<Point3<T>> {
+    pub fn world_to_object(&self, point: Point3<T>) -> Option<Point3<T>> {
         let pp = Some(point);
         let o = self.parent.as_ref().map_or(pp, |weak| {
             weak.upgrade()
