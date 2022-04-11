@@ -1,4 +1,6 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{
     abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };
@@ -24,8 +26,14 @@ impl<T: BaseFloat> Plane<T> {
         self.transform
     }
 
-    pub fn material(&self) -> Option<Material<T>> {
-        Some(self.material)
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
+
+    pub fn bounds(&self) -> Bounds<T> {
+        let max = Point3::new(T::max_value(), T::zero(), T::max_value());
+        let min = Point3::new(T::min_value(), T::zero(), T::min_value());
+        Bounds::new(min, max)
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {

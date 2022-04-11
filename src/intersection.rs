@@ -6,6 +6,7 @@ use crate::{
 };
 use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
+use std::cmp::Ordering::Less;
 
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Intersection<T> {
@@ -60,7 +61,7 @@ impl<T: BaseFloat> Intersection<T> {
 pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
     v.iter()
         .filter(|i| i.t >= T::from(f32::EPSILON).unwrap()) // -0.0 >= T::zero()
-        .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
+        .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less))
         .cloned()
 }
 

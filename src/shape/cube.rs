@@ -1,4 +1,6 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
@@ -17,40 +19,24 @@ impl<T: BaseFloat + Default> Default for Cube<T> {
     }
 }
 
-fn check_axis<T: BaseFloat>(origin: T, direction: T) -> (T, T) {
-    let tmin_numerator = T::from(-1).unwrap() - origin;
-    let tmax_numerator = T::one() - origin;
-    let (tmin, tmax) = if direction.abs() >= T::epsilon() {
-        (tmin_numerator / direction, tmax_numerator / direction)
-    } else {
-        (
-            tmin_numerator * T::infinity(),
-            tmax_numerator * T::infinity(),
-        )
-    };
-    if tmin < tmax {
-        (tmin, tmax)
-    } else {
-        (tmax, tmin)
-    }
-}
-
 impl<T: BaseFloat> Cube<T> {
     pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
 
-    pub fn material(&self) -> Option<Material<T>> {
-        Some(self.material)
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
+    pub fn bounds(&self) -> Bounds<T> {
+        let one = T::one();
+        let max = Point3::new(one, one, one);
+        let min = Point3::new(-one, -one, -one);
+        Bounds::new(min, max)
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x);
-        let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y);
-        let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z);
-        let tmin = xtmin.max(ytmin).max(ztmin);
-        let tmax = xtmax.min(ytmax).min(ztmax);
-        if tmin < tmax {
+        let (tmin, tmax) = self.bounds().check_axes(ray).minmax();
+        if tmin <= tmax {
             vec![
                 Intersection::new(tmin, Shape::Cube(self.clone())),
                 Intersection::new(tmax, Shape::Cube(self.clone())),

@@ -1,9 +1,12 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{
     abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
     Vector3,
 };
 use derive_more::Constructor;
+use std::cmp::Ordering::Less;
 
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Cylinder<T> {
@@ -19,8 +22,8 @@ impl<T: BaseFloat + Default> Default for Cylinder<T> {
         Cylinder::<T> {
             transform: Matrix4::identity(),
             material: Material::default(),
-            minimum: -T::infinity(),
-            maximum: T::infinity(),
+            minimum: T::min_value(),
+            maximum: T::max_value(),
             closed: false,
         }
     }
@@ -52,8 +55,30 @@ impl<T: BaseFloat> Cylinder<T> {
         self.transform
     }
 
-    pub fn material(&self) -> Option<Material<T>> {
-        Some(self.material)
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
+    pub fn bounds(&self) -> Bounds<T> {
+        let one = T::one();
+        let max = Point3::new(
+            one,
+            if self.closed {
+                self.maximum
+            } else {
+                T::max_value()
+            },
+            one,
+        );
+        let min = Point3::new(
+            -one,
+            if self.closed {
+                self.minimum
+            } else {
+                T::min_value()
+            },
+            -one,
+        );
+        Bounds::new(min, max)
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -80,7 +105,7 @@ impl<T: BaseFloat> Cylinder<T> {
                     xs.push(Intersection::new(t1, Shape::Cylinder(self.clone())));
                 }
                 xs.append(&mut self.intersect_caps(ray));
-                xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+                xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less));
                 xs
             }
         }
@@ -99,9 +124,8 @@ impl<T: BaseFloat> Cylinder<T> {
 }
 
 mod tests {
-    use crate::shape::cylinder;
-
     use super::*;
+    use crate::shape::cylinder;
     use cgmath::{assert_relative_eq, Rad};
     use std::f32::consts::PI;
 

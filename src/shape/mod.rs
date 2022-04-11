@@ -6,6 +6,7 @@ pub mod plane;
 pub mod sphere;
 
 use crate::{
+    bounds::Bounds,
     intersection::Intersection,
     material::Material,
     ray::Ray,
@@ -42,21 +43,34 @@ impl<T: BaseFloat> Shape<T> {
 
     pub fn material(&self) -> Option<Material<T>> {
         match self {
-            Shape::Cone(c) => c.material(),
-            Shape::Cube(c) => c.material(),
-            Shape::Cylinder(c) => c.material(),
-            Shape::Group(g) => None,
-            Shape::Plane(p) => p.material(),
-            Shape::Sphere(s) => s.material(),
+            Shape::Cone(c) => Some(c.material()),
+            Shape::Cube(c) => Some(c.material()),
+            Shape::Cylinder(c) => Some(c.material()),
+            Shape::Group(_) => None,
+            Shape::Plane(p) => Some(p.material()),
+            Shape::Sphere(s) => Some(s.material()),
         }
     }
 
-    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    pub fn bounds(&self) -> Option<Bounds<T>> {
+        match self {
+            Shape::Cone(c) => Some(c.bounds()),
+            Shape::Cube(c) => Some(c.bounds()),
+            Shape::Cylinder(c) => Some(c.bounds()),
+            Shape::Group(g) => g.bounds(),
+            Shape::Plane(p) => Some(p.bounds()),
+            Shape::Sphere(s) => Some(s.bounds()),
+        }
+    }
+
+    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
         match self {
             Shape::Cone(c) => c.local_normal_at(point),
             Shape::Cube(c) => c.local_normal_at(point),
             Shape::Cylinder(c) => c.local_normal_at(point),
-            Shape::Group(g) => g.local_normal_at(point),
+            Shape::Group(_) => {
+                panic!("The local_normal_at() is not supposed to by called on Shape::Group.")
+            }
             Shape::Plane(p) => p.local_normal_at(point),
             Shape::Sphere(s) => s.local_normal_at(point),
         }

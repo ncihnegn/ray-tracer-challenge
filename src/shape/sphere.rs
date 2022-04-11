@@ -1,4 +1,6 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
@@ -22,8 +24,15 @@ impl<T: BaseFloat> Sphere<T> {
         self.transform
     }
 
-    pub fn material(&self) -> Option<Material<T>> {
-        Some(self.material)
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
+
+    pub fn bounds(&self) -> Bounds<T> {
+        let one = T::one();
+        let max = Point3::new(one, one, one);
+        let min = Point3::new(-one, -one, -one);
+        Bounds::new(min, max)
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {

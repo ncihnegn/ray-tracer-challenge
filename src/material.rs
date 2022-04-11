@@ -60,11 +60,10 @@ impl<T: BaseFloat + Default> Material<T> {
 }
 
 mod tests {
-    use std::f32::consts::FRAC_1_SQRT_2;
-
     use super::*;
     use approx::assert_relative_eq;
     use cgmath::EuclideanSpace;
+    use std::f32::consts::FRAC_1_SQRT_2;
 
     #[test]
     fn lighting() {

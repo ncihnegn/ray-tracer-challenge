@@ -1,4 +1,6 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{
     abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix,
     Vector3,
@@ -7,6 +9,7 @@ use derivative::Derivative;
 use derive_more::Constructor;
 use std::{
     cell::RefCell,
+    cmp::Ordering::Less,
     fmt::Debug,
     rc::{Rc, Weak},
 };
@@ -90,28 +93,53 @@ impl<T: BaseFloat + Debug> Group<T> {
     pub fn material(&self) -> Option<Material<T>> {
         None
     }
-
-    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        let mut xs = self
-            .children
-            .iter()
-            .flat_map(|r| r.borrow().shape.intersect(ray))
-            .collect::<Vec<_>>();
-        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-        xs
+    pub fn bounds(&self) -> Option<Bounds<T>> {
+        Bounds::from_all_points(
+            &self
+                .children
+                .iter()
+                .filter_map(|rc| {
+                    let shape = &rc.borrow().shape;
+                    shape.bounds().map(|b| b.transform(shape.transform()))
+                })
+                .flatten()
+                .collect::<Vec<_>>(),
+        )
     }
 
-    pub fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
-        Vector3::unit_x()
+    pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
+        if self.bounds().map_or(true, |b| b.is_intersected_with(ray)) {
+            let mut xs = self
+                .children
+                .iter()
+                .flat_map(|rc| rc.borrow().shape.intersect(ray))
+                .collect::<Vec<_>>();
+            xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less));
+            xs
+        } else {
+            vec![]
+        }
     }
 }
 
 mod tests {
-    use crate::shape::sphere::Sphere;
-
     use super::*;
+    use crate::shape::sphere::Sphere;
     use cgmath::{assert_relative_eq, Rad, Zero};
     use std::f32::consts::{FRAC_PI_2, PI, SQRT_2};
+
+    #[test]
+    fn bounds() {
+        let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
+        let rc = Rc::new(RefCell::new(ShapeWrapper::new(shape, None)));
+        push(
+            &rc,
+            Shape::Sphere(Sphere::new(
+                Matrix4::from_translation(Vector3::unit_x() * 5.),
+                Material::default(),
+            )),
+        );
+    }
 
     #[test]
     fn local_intersect() {

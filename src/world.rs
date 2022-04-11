@@ -133,11 +133,10 @@ impl<T: BaseFloat + Default> World<T> {
 }
 
 mod tests {
-    use std::f32::consts::FRAC_1_SQRT_2;
-
     use super::*;
     use approx::assert_relative_eq;
     use cgmath::{EuclideanSpace, Vector3};
+    use std::f32::consts::FRAC_1_SQRT_2;
 
     #[test]
     fn shade_hit() {

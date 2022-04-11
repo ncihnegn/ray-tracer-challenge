@@ -2,7 +2,6 @@ use cgmath::BaseFloat;
 use num_traits::cast;
 use rgb::RGB;
 use std::fmt::Display;
-use std::vec::Vec;
 
 pub struct Canvas<T> {
     pub width: usize,

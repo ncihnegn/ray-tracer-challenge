@@ -1,10 +1,12 @@
-use crate::{intersection::Intersection, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{
     abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
     Vector3,
 };
 use derive_more::Constructor;
-use std::fmt::Debug;
+use std::{cmp::Ordering::Less, fmt::Debug};
 
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Cone<T> {
@@ -20,8 +22,8 @@ impl<T: BaseFloat + Default> Default for Cone<T> {
         Cone::<T> {
             transform: Matrix4::identity(),
             material: Material::default(),
-            minimum: -T::infinity(),
-            maximum: T::infinity(),
+            minimum: T::min_value(),
+            maximum: T::max_value(),
             closed: false,
         }
     }
@@ -53,8 +55,31 @@ impl<T: BaseFloat + Debug> Cone<T> {
         self.transform
     }
 
-    pub fn material(&self) -> Option<Material<T>> {
-        Some(self.material)
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
+
+    pub fn bounds(&self) -> Bounds<T> {
+        let one = T::one();
+        let max = Point3::new(
+            one,
+            if self.closed {
+                self.maximum
+            } else {
+                T::max_value()
+            },
+            one,
+        );
+        let min = Point3::new(
+            -one,
+            if self.closed {
+                self.minimum
+            } else {
+                T::min_value()
+            },
+            -one,
+        );
+        Bounds::new(min, max)
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
@@ -84,7 +109,7 @@ impl<T: BaseFloat + Debug> Cone<T> {
             }
         }
         xs.append(&mut self.intersect_caps(ray));
-        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less));
         xs
     }
 
@@ -101,9 +126,8 @@ impl<T: BaseFloat + Debug> Cone<T> {
 }
 
 mod tests {
-    use crate::shape::cone;
-
     use super::*;
+    use crate::shape::cone;
     use cgmath::{assert_relative_eq, Rad, Zero};
     use std::f32::consts::{PI, SQRT_2};
 
