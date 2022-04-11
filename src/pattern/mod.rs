@@ -7,8 +7,7 @@ pub mod test;
 use crate::{
     material::Material,
     pattern::{checker::Checker, gradient::Gradient, ring::Ring, stripe::Stripe, test::Test},
-    shape::group::ShapeWrapper,
-    shape::Shape,
+    shape::{Shape, ShapeWrapper},
 };
 use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix};
 use rgb::RGB;

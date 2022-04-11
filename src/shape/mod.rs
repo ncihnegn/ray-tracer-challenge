@@ -17,7 +17,10 @@ use crate::{
 use cgmath::{
     BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
 };
+use derivative::Derivative;
+use derive_more::Constructor;
 use enum_as_inner::EnumAsInner;
+use std::{cell::RefCell, rc::Weak};
 
 #[derive(Clone, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
@@ -109,6 +112,46 @@ impl<T: BaseFloat> Shape<T> {
 
 pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
     v - normal * T::from(2).unwrap() * v.dot(normal)
+}
+
+#[derive(Clone, Constructor, Debug, Derivative)]
+#[derivative(PartialEq)]
+pub struct ShapeWrapper<T> {
+    pub shape: Shape<T>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<Weak<RefCell<ShapeWrapper<T>>>>,
+}
+
+impl<T: BaseFloat> ShapeWrapper<T> {
+    pub fn world_to_object(&self, point: Point3<T>) -> Option<Point3<T>> {
+        let pp = Some(point);
+        let o = self.parent.as_ref().map_or(pp, |weak| {
+            weak.upgrade()
+                .map_or(pp, |rc| rc.borrow().world_to_object(point))
+        });
+        self.shape
+            .transform()
+            .invert()
+            .and_then(|i| o.map(|p| Point3::from_vec((i * p.to_homogeneous()).truncate())))
+    }
+
+    fn normal_to_world(&self, normal: Vector3<T>) -> Option<Vector3<T>> {
+        let ov = self.shape.transform().invert().map(|i| {
+            (i.transpose() * normal.extend(T::zero()))
+                .truncate()
+                .normalize()
+        });
+        self.parent.as_ref().map_or(ov, |weak| {
+            weak.upgrade()
+                .map_or(ov, |rc| ov.and_then(|v| rc.borrow().normal_to_world(v)))
+        })
+    }
+
+    pub fn normal_at(&self, world_point: Point3<T>) -> Option<Vector3<T>> {
+        self.world_to_object(world_point)
+            .map(|local_point| self.shape.local_normal_at(local_point))
+            .map(|local_normal| self.normal_to_world(local_normal).unwrap())
+    }
 }
 
 mod tests {
