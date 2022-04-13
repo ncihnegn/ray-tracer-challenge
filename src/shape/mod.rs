@@ -4,6 +4,7 @@ pub mod cylinder;
 pub mod group;
 pub mod plane;
 pub mod sphere;
+pub mod triangle;
 
 use crate::{
     bounds::Bounds,
@@ -12,6 +13,7 @@ use crate::{
     ray::Ray,
     shape::{
         cone::Cone, cube::Cube, cylinder::Cylinder, group::Group, plane::Plane, sphere::Sphere,
+        triangle::Triangle,
     },
 };
 use cgmath::{
@@ -30,6 +32,7 @@ pub enum Shape<T> {
     Group(Group<T>),
     Plane(Plane<T>),
     Sphere(Sphere<T>),
+    Triangle(Triangle<T>),
 }
 
 impl<T: BaseFloat> Shape<T> {
@@ -41,6 +44,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Group(g) => g.transform(),
             Shape::Plane(p) => p.transform(),
             Shape::Sphere(s) => s.transform(),
+            Shape::Triangle(t) => t.transform(),
         }
     }
 
@@ -52,6 +56,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Group(_) => None,
             Shape::Plane(p) => Some(p.material()),
             Shape::Sphere(s) => Some(s.material()),
+            Shape::Triangle(t) => Some(t.material()),
         }
     }
 
@@ -63,6 +68,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Group(g) => g.bounds(),
             Shape::Plane(p) => Some(p.bounds()),
             Shape::Sphere(s) => Some(s.bounds()),
+            Shape::Triangle(t) => Some(t.bounds()),
         }
     }
 
@@ -76,6 +82,7 @@ impl<T: BaseFloat> Shape<T> {
             }
             Shape::Plane(p) => p.local_normal_at(point),
             Shape::Sphere(s) => s.local_normal_at(point),
+            Shape::Triangle(t) => t.local_normal_at(point),
         }
     }
 
@@ -87,6 +94,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Group(g) => g.local_intersect(ray),
             Shape::Plane(p) => p.local_intersect(ray),
             Shape::Sphere(s) => s.local_intersect(ray),
+            Shape::Triangle(t) => t.local_intersect(ray),
         }
     }
 
