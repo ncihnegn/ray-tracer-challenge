@@ -128,39 +128,14 @@ mod tests {
                     Material::default(),
                 )),
             );
-
-            assert_eq!(rc.borrow().shape.as_group().unwrap().children.len(), 3);
-            let xs = rc
-                .borrow()
-                .shape
-                .as_group()
-                .unwrap()
-                .local_intersect(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z()));
+            let group = rc.borrow().shape.as_group().unwrap().clone();
+            assert_eq!(group.children.len(), 3);
+            let xs = group.local_intersect(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z()));
             assert_eq!(xs.len(), 4);
-            assert_eq!(
-                xs[0].object,
-                rc.borrow().shape.as_group().unwrap().children[1]
-                    .borrow()
-                    .shape
-            );
-            assert_eq!(
-                xs[1].object,
-                rc.borrow().shape.as_group().unwrap().children[1]
-                    .borrow()
-                    .shape
-            );
-            assert_eq!(
-                xs[2].object,
-                rc.borrow().shape.as_group().unwrap().children[0]
-                    .borrow()
-                    .shape
-            );
-            assert_eq!(
-                xs[3].object,
-                rc.borrow().shape.as_group().unwrap().children[0]
-                    .borrow()
-                    .shape
-            );
+            assert_eq!(xs[0].object, group.children[1].borrow().shape);
+            assert_eq!(xs[1].object, group.children[1].borrow().shape);
+            assert_eq!(xs[2].object, group.children[0].borrow().shape);
+            assert_eq!(xs[3].object, group.children[0].borrow().shape);
         }
         {
             let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
@@ -198,14 +173,10 @@ mod tests {
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
         ));
-        push(&r1.borrow().shape.as_group().unwrap().children[0], shape);
+        let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
+        push(&child, shape);
         assert_relative_eq!(
-            r1.borrow().shape.as_group().unwrap().children[0]
-                .borrow()
-                .shape
-                .as_group()
-                .unwrap()
-                .children[0]
+            child.borrow().shape.as_group().unwrap().children[0]
                 .borrow()
                 .world_to_object(Point3::new(-2., 0., -10.))
                 .unwrap(),
@@ -233,15 +204,11 @@ mod tests {
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
         ));
-        push(&r1.borrow().shape.as_group().unwrap().children[0], shape);
+        let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
+        push(&child, shape);
         let frac_1_sqrt_3 = 3.0_f32.sqrt().recip();
         assert_relative_eq!(
-            r1.borrow().shape.as_group().unwrap().children[0]
-                .borrow()
-                .shape
-                .as_group()
-                .unwrap()
-                .children[0]
+            child.borrow().shape.as_group().unwrap().children[0]
                 .borrow()
                 .normal_to_world(Vector3::new(frac_1_sqrt_3, frac_1_sqrt_3, frac_1_sqrt_3))
                 .unwrap(),
@@ -269,14 +236,10 @@ mod tests {
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
         ));
-        push(&r1.borrow().shape.as_group().unwrap().children[0], shape);
+        let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
+        push(&child, shape);
         assert_relative_eq!(
-            r1.borrow().shape.as_group().unwrap().children[0]
-                .borrow()
-                .shape
-                .as_group()
-                .unwrap()
-                .children[0]
+            child.borrow().shape.as_group().unwrap().children[0]
                 .borrow()
                 .normal_at(Point3::new(1.7321, 1.1547, -5.5774))
                 .unwrap(),
