@@ -23,7 +23,10 @@ use cgmath::{
 use derivative::Derivative;
 use derive_more::Constructor;
 use enum_as_inner::EnumAsInner;
-use std::{cell::RefCell, rc::Weak};
+use std::{
+    cell::RefCell,
+    rc::{Rc, Weak},
+};
 
 #[derive(Clone, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
@@ -129,6 +132,19 @@ pub struct ShapeWrapper<T> {
     pub shape: Shape<T>,
     #[derivative(PartialEq = "ignore")]
     pub parent: Option<Weak<RefCell<ShapeWrapper<T>>>>,
+}
+
+pub type ShapeLink<T> = Rc<RefCell<ShapeWrapper<T>>>;
+
+pub fn get_link<T>(shape: Shape<T>) -> ShapeLink<T> {
+    Rc::new(RefCell::new(ShapeWrapper::new(shape, None)))
+}
+
+pub fn get_link_with_parent<T>(shape: Shape<T>, parent: &ShapeLink<T>) -> ShapeLink<T> {
+    Rc::new(RefCell::new(ShapeWrapper::new(
+        shape,
+        Some(Rc::downgrade(parent)),
+    )))
 }
 
 impl<T: BaseFloat> ShapeWrapper<T> {

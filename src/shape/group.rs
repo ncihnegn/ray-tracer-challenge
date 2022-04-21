@@ -3,7 +3,7 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{Shape, ShapeWrapper},
+    shape::{get_link, get_link_with_parent, Shape, ShapeLink, ShapeWrapper},
 };
 use cgmath::{
     abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix,
@@ -12,19 +12,14 @@ use cgmath::{
 use derive_more::Constructor;
 use std::{cell::RefCell, cmp::Ordering::Less, fmt::Debug, rc::Rc};
 
-type ShapeLink<T> = Rc<RefCell<ShapeWrapper<T>>>;
-
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Group<T> {
     pub transform: Matrix4<T>,
     pub children: Vec<ShapeLink<T>>,
 }
 
-pub fn push<T>(parent: &Rc<RefCell<ShapeWrapper<T>>>, shape: Shape<T>) {
-    let child = Rc::new(RefCell::new(ShapeWrapper::new(
-        shape,
-        Some(Rc::downgrade(parent)),
-    )));
+pub fn push<T>(parent: &ShapeLink<T>, shape: Shape<T>) {
+    let child = get_link_with_parent(shape, parent);
     parent
         .borrow_mut()
         .shape
@@ -89,7 +84,7 @@ mod tests {
     #[test]
     fn bounds() {
         let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
-        let rc = Rc::new(RefCell::new(ShapeWrapper::new(shape, None)));
+        let rc = get_link(shape);
         push(
             &rc,
             Shape::Sphere(Sphere::new(
@@ -109,10 +104,7 @@ mod tests {
             );
         }
         {
-            let rc = Rc::new(RefCell::new(ShapeWrapper::new(
-                Shape::Group(Group::<f32>::default()),
-                None,
-            )));
+            let rc = get_link(Shape::Group(Group::<f32>::default()));
             push(&rc, Shape::Sphere(Sphere::default()));
             push(
                 &rc,
@@ -139,7 +131,7 @@ mod tests {
         }
         {
             let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
-            let rc = Rc::new(RefCell::new(ShapeWrapper::new(shape, None)));
+            let rc = get_link(shape);
             push(
                 &rc,
                 Shape::Sphere(Sphere::new(
