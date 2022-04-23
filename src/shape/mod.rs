@@ -4,6 +4,7 @@ pub mod cylinder;
 pub mod group;
 pub mod obj_file;
 pub mod plane;
+pub mod smooth_triangle;
 pub mod sphere;
 pub mod triangle;
 
@@ -13,8 +14,8 @@ use crate::{
     material::Material,
     ray::Ray,
     shape::{
-        cone::Cone, cube::Cube, cylinder::Cylinder, group::Group, plane::Plane, sphere::Sphere,
-        triangle::Triangle,
+        cone::Cone, cube::Cube, cylinder::Cylinder, group::Group, plane::Plane,
+        smooth_triangle::SmoothTriangle, sphere::Sphere, triangle::Triangle,
     },
 };
 use cgmath::{
@@ -35,6 +36,7 @@ pub enum Shape<T> {
     Cylinder(Cylinder<T>),
     Group(Group<T>),
     Plane(Plane<T>),
+    SmoothTriangle(SmoothTriangle<T>),
     Sphere(Sphere<T>),
     Triangle(Triangle<T>),
 }
@@ -47,6 +49,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cylinder(c) => c.transform(),
             Shape::Group(g) => g.transform(),
             Shape::Plane(p) => p.transform(),
+            Shape::SmoothTriangle(s) => s.transform(),
             Shape::Sphere(s) => s.transform(),
             Shape::Triangle(t) => t.transform(),
         }
@@ -59,8 +62,9 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cylinder(c) => Some(c.material()),
             Shape::Group(_) => None,
             Shape::Plane(p) => Some(p.material()),
+            Shape::SmoothTriangle(s) => Some(s.material()),
             Shape::Sphere(s) => Some(s.material()),
-            Shape::Triangle(t) => Some(t.material()),
+            Shape::Triangle(t) => None,
         }
     }
 
@@ -71,12 +75,13 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cylinder(c) => Some(c.bounds()),
             Shape::Group(g) => g.bounds(),
             Shape::Plane(p) => Some(p.bounds()),
+            Shape::SmoothTriangle(s) => None,
             Shape::Sphere(s) => Some(s.bounds()),
             Shape::Triangle(t) => Some(t.bounds()),
         }
     }
 
-    fn local_normal_at(&self, point: Point3<T>) -> Vector3<T> {
+    fn local_normal_at(&self, point: Point3<T>, uv: Option<(T, T)>) -> Vector3<T> {
         match self {
             Shape::Cone(c) => c.local_normal_at(point),
             Shape::Cube(c) => c.local_normal_at(point),
@@ -85,6 +90,7 @@ impl<T: BaseFloat> Shape<T> {
                 panic!("The local_normal_at() is not supposed to by called on Shape::Group.")
             }
             Shape::Plane(p) => p.local_normal_at(point),
+            Shape::SmoothTriangle(s) => s.local_normal_at(point, uv),
             Shape::Sphere(s) => s.local_normal_at(point),
             Shape::Triangle(t) => t.local_normal_at(point),
         }
@@ -97,6 +103,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cylinder(c) => c.local_intersect(ray),
             Shape::Group(g) => g.local_intersect(ray),
             Shape::Plane(p) => p.local_intersect(ray),
+            Shape::SmoothTriangle(s) => s.local_intersect(ray),
             Shape::Sphere(s) => s.local_intersect(ray),
             Shape::Triangle(t) => t.local_intersect(ray),
         }
@@ -110,11 +117,14 @@ impl<T: BaseFloat> Shape<T> {
         }
     }
 
-    pub fn normal_at(&self, point: Point3<T>) -> Option<Vector3<T>> {
+    pub fn normal_at(&self, point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
         self.transform().invert().map(|i| {
             (i.transpose()
                 * self
-                    .local_normal_at(Point3::from_vec((i * point.to_homogeneous()).truncate()))
+                    .local_normal_at(
+                        Point3::from_vec((i * point.to_homogeneous()).truncate()),
+                        uv,
+                    )
                     .extend(T::zero()))
             .truncate()
             .normalize()
@@ -172,9 +182,9 @@ impl<T: BaseFloat> ShapeWrapper<T> {
         })
     }
 
-    pub fn normal_at(&self, world_point: Point3<T>) -> Option<Vector3<T>> {
+    pub fn normal_at(&self, world_point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
         self.world_to_object(world_point)
-            .map(|local_point| self.shape.local_normal_at(local_point))
+            .map(|local_point| self.shape.local_normal_at(local_point, uv))
             .map(|local_normal| self.normal_to_world(local_normal).unwrap())
     }
 }
@@ -191,7 +201,7 @@ mod tests {
                 Matrix4::from_translation(Vector3::unit_y()),
                 Material::default(),
             ))
-            .normal_at(Point3::new(0., 1.70711, -0.70711))
+            .normal_at(Point3::new(0., 1.70711, -0.70711), None)
             .unwrap(),
             Vector3::new(0., 0.70711, -0.70711),
             max_relative = 0.00001,
@@ -201,7 +211,7 @@ mod tests {
                 Matrix4::from_nonuniform_scale(1., 0.5, 1.) * Matrix4::from_angle_z(Rad(PI / 5.)),
                 Material::default(),
             ))
-            .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.))
+            .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.), None)
             .unwrap(),
             Vector3::new(0., 0.97014, -0.24254),
             max_relative = 0.0001,

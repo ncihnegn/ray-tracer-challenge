@@ -42,7 +42,7 @@ impl<T: BaseFloat> Cone<T> {
             for m in [self.minimum, self.maximum] {
                 let t = (m - ray.origin.y) / ray.direction.y;
                 if check_cap(ray, t, m) {
-                    xs.push(Intersection::new(t, Shape::Cone(self.clone())));
+                    xs.push(Intersection::new(t, Shape::Cone(self.clone()), None));
                 }
             }
         }
@@ -91,7 +91,11 @@ impl<T: BaseFloat + Debug> Cone<T> {
         let c = ray.origin.x.powi(2) - ray.origin.y.powi(2) + ray.origin.z.powi(2);
         let mut xs = Vec::new();
         if abs_diff_eq!(a, T::zero()) && !abs_diff_eq!(b, T::zero()) {
-            xs.push(Intersection::new(-c / (two * b), Shape::Cone(self.clone())));
+            xs.push(Intersection::new(
+                -c / (two * b),
+                Shape::Cone(self.clone()),
+                None,
+            ));
         } else {
             let disc = b.powi(2) - T::from(4).unwrap() * a * c;
             if disc < T::zero() {
@@ -101,11 +105,11 @@ impl<T: BaseFloat + Debug> Cone<T> {
             let t1 = (-b + disc.sqrt()) / (two * a);
             let y0 = ray.origin.y + t0 * ray.direction.y;
             if self.minimum < y0 && y0 < self.maximum {
-                xs.push(Intersection::new(t0, Shape::Cone(self.clone())));
+                xs.push(Intersection::new(t0, Shape::Cone(self.clone()), None));
             }
             let y1 = ray.origin.y + t1 * ray.direction.y;
             if self.minimum < y1 && y1 < self.maximum {
-                xs.push(Intersection::new(t1, Shape::Cone(self.clone())));
+                xs.push(Intersection::new(t1, Shape::Cone(self.clone()), None));
             }
         }
         xs.append(&mut self.intersect_caps(ray));
@@ -150,8 +154,8 @@ mod tests {
             assert_eq!(
                 cone.local_intersect(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
                 vec![
-                    Intersection::new(5., shape.clone()),
-                    Intersection::new(5., shape)
+                    Intersection::new(5., shape.clone(), None),
+                    Intersection::new(5., shape, None)
                 ]
             );
             assert_relative_eq!(

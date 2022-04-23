@@ -38,8 +38,8 @@ impl<T: BaseFloat> Cube<T> {
         let (tmin, tmax) = self.bounds().check_axes(ray).minmax();
         if tmin <= tmax {
             vec![
-                Intersection::new(tmin, Shape::Cube(self.clone())),
-                Intersection::new(tmax, Shape::Cube(self.clone())),
+                Intersection::new(tmin, Shape::Cube(self.clone()), None),
+                Intersection::new(tmax, Shape::Cube(self.clone()), None),
             ]
         } else {
             vec![]
@@ -72,8 +72,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -82,8 +82,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -92,8 +92,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -102,8 +102,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -112,8 +112,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -122,8 +122,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(4., shape.clone()),
-                    Intersection::new(6., shape.clone())
+                    Intersection::new(4., shape.clone(), None),
+                    Intersection::new(6., shape.clone(), None)
                 ]
             );
         }
@@ -132,8 +132,8 @@ mod tests {
             assert_eq!(
                 cube.local_intersect(ray),
                 vec![
-                    Intersection::new(-1., shape.clone()),
-                    Intersection::new(1., shape)
+                    Intersection::new(-1., shape.clone(), None),
+                    Intersection::new(1., shape, None)
                 ]
             );
         }

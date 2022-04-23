@@ -44,12 +44,21 @@ impl<T: BaseFloat> Sphere<T> {
         let discriminant = b.powi(2) - T::from(4).unwrap() * a * c;
         match discriminant {
             d if d > T::zero() => vec![
-                Intersection::new((-b - d.sqrt()) / (two * a), Shape::Sphere(self.clone())),
-                Intersection::new((-b + d.sqrt()) / (two * a), Shape::Sphere(self.clone())),
+                Intersection::new(
+                    (-b - d.sqrt()) / (two * a),
+                    Shape::Sphere(self.clone()),
+                    None,
+                ),
+                Intersection::new(
+                    (-b + d.sqrt()) / (two * a),
+                    Shape::Sphere(self.clone()),
+                    None,
+                ),
             ],
             d if d == T::zero() => vec![Intersection::new(
                 -b / (two * a),
                 Shape::Sphere(self.clone()),
+                None,
             )],
             _ => vec![],
         }

@@ -61,10 +61,9 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
     pub fn obj_to_group(self) -> ShapeLink<T> {
         let top_group = get_link(Shape::Group(Group::default()));
         for (_, group) in self.groups {
-            if let Some(g) = group.borrow().shape.as_group() {
-                if !g.children.is_empty() {
-                    push(&top_group, Shape::Group(g.clone()));
-                }
+            let shape = group.borrow().shape.clone();
+            if !shape.as_group().unwrap().children.is_empty() {
+                push(&top_group, shape);
             }
         }
         top_group

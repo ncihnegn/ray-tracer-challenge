@@ -43,6 +43,7 @@ impl<T: BaseFloat> Plane<T> {
             vec![Intersection::new(
                 -ray.origin.y / ray.direction.y,
                 Shape::Plane(self.clone()),
+                None,
             )]
         }
     }
@@ -61,7 +62,7 @@ mod tests {
         let plane = Plane::default();
         let shape = Shape::Plane(plane.clone());
         let vy = Vector3::unit_y();
-        let v = vec![Intersection::new(1., shape)];
+        let v = vec![Intersection::new(1., shape, None)];
         assert_eq!(
             plane.local_intersect(Ray::new(Point3::from_vec(vy), -vy)),
             v

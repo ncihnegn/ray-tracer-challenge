@@ -12,13 +12,14 @@ use std::cmp::Ordering::Less;
 pub struct Intersection<T> {
     pub t: T,
     pub object: Shape<T>,
+    pub uv: Option<(T, T)>,
 }
 
 impl<T: BaseFloat> Intersection<T> {
     pub fn precompute(&self, ray: Ray<T>, xs: &[Intersection<T>]) -> Option<Computation<T>> {
         let point = ray.position(self.t);
         let eyev = -ray.direction;
-        self.object.normal_at(point).map(|t_normalv| {
+        self.object.normal_at(point, self.uv).map(|t_normalv| {
             let inside = dot(t_normalv, eyev) < T::zero();
             let normalv = if inside { -t_normalv } else { t_normalv };
             let reflectv = reflect(ray.direction, normalv);
@@ -74,22 +75,28 @@ mod tests {
         let sphere = Shape::Sphere(Sphere::default());
         {
             // All have positive t
-            let i1 = Intersection::new(1., sphere.clone());
+            let i1 = Intersection::new(1., sphere.clone(), None);
             assert_eq!(
-                super::hit(&vec![i1.clone(), Intersection::new(2., sphere.clone())]),
+                super::hit(&vec![
+                    i1.clone(),
+                    Intersection::new(2., sphere.clone(), None)
+                ],),
                 Some(i1.clone())
             );
             // Some have negative t
             assert_eq!(
-                super::hit(&vec![Intersection::new(-1., sphere.clone()), i1.clone()]),
+                super::hit(&vec![
+                    Intersection::new(-1., sphere.clone(), None),
+                    i1.clone()
+                ],),
                 Some(i1)
             );
         }
         // All have negative t
         assert_eq!(
             super::hit(&vec![
-                Intersection::new(-2., sphere.clone()),
-                Intersection::new(-1., sphere)
+                Intersection::new(-2., sphere.clone(), None),
+                Intersection::new(-1., sphere, None)
             ]),
             None
         );
@@ -104,7 +111,7 @@ mod tests {
                 Matrix4::from_translation(vz),
                 Material::default(),
             ));
-            let i = Intersection::new(5., shape);
+            let i = Intersection::new(5., shape, None);
             let xs = vec![i.clone()];
             let comps = i.precompute(r, &xs).unwrap();
             assert!(comps.over_point().z < EPSILON / 2.);
@@ -116,7 +123,7 @@ mod tests {
             let object = Shape::Sphere(Sphere::default());
             let vz = Vector3::unit_z();
             let point = Point3::from_vec(vz);
-            let i = Intersection::new(1., object.clone());
+            let i = Intersection::new(1., object.clone(), None);
             let xs = vec![i.clone()];
             assert_eq!(
                 i.precompute(Ray::new(Point3::origin(), vz), &xs).unwrap(),
@@ -129,7 +136,7 @@ mod tests {
                 Point3::new(0., 1., -1.),
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
-            let i = Intersection::new(2.0_f32.sqrt(), Shape::Plane(shape));
+            let i = Intersection::new(2.0_f32.sqrt(), Shape::Plane(shape), None);
             let xs = vec![i.clone()];
             let comps = i.precompute(r, &xs).unwrap();
             assert_eq!(
@@ -149,12 +156,12 @@ mod tests {
             let c = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * 0.25), material));
             let r = Ray::new(Point3::from_vec(vz * -4.), vz);
             let xs = vec![
-                Intersection::new(2., a.clone()),
-                Intersection::new(2.75, b.clone()),
-                Intersection::new(3.25, c.clone()),
-                Intersection::new(4.75, b),
-                Intersection::new(5.25, c),
-                Intersection::new(6., a),
+                Intersection::new(2., a.clone(), None),
+                Intersection::new(2.75, b.clone(), None),
+                Intersection::new(3.25, c.clone(), None),
+                Intersection::new(4.75, b, None),
+                Intersection::new(5.25, c, None),
+                Intersection::new(6., a, None),
             ];
             let n1s = vec![1., 1.5, 2., 2.5, 2.5, 1.5];
             let n2s = vec![1.5, 2., 2.5, 2.5, 1.5, 1.];

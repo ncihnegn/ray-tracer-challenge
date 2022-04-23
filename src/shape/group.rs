@@ -233,7 +233,7 @@ mod tests {
         assert_relative_eq!(
             child.borrow().shape.as_group().unwrap().children[0]
                 .borrow()
-                .normal_at(Point3::new(1.7321, 1.1547, -5.5774))
+                .normal_at(Point3::new(1.7321, 1.1547, -5.5774), None)
                 .unwrap(),
             Vector3::new(0.2857, 0.4286, -0.8571),
             max_relative = 0.001

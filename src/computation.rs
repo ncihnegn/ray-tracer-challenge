@@ -78,8 +78,8 @@ mod tests {
         {
             let r = Ray::new(Point3::new(0., 0., FRAC_1_SQRT_2), Vector3::unit_y());
             let xs = vec![
-                Intersection::new(-FRAC_1_SQRT_2, shape.clone()),
-                Intersection::new(FRAC_1_SQRT_2, shape.clone()),
+                Intersection::new(-FRAC_1_SQRT_2, shape.clone(), None),
+                Intersection::new(FRAC_1_SQRT_2, shape.clone(), None),
             ];
             let comps = xs[1].precompute(r, &xs).unwrap();
             assert_eq!(comps.schlick(), 1.0);
@@ -87,15 +87,15 @@ mod tests {
         {
             let r = Ray::new(Point3::origin(), Vector3::unit_y());
             let xs = vec![
-                Intersection::new(-1., shape.clone()),
-                Intersection::new(1., shape.clone()),
+                Intersection::new(-1., shape.clone(), None),
+                Intersection::new(1., shape.clone(), None),
             ];
             let comps = xs[1].precompute(r, &xs).unwrap();
             assert_relative_eq!(comps.schlick(), 0.04);
         }
         {
             let r = Ray::new(Point3::new(0., 0.99, -2.), Vector3::unit_z());
-            let xs = vec![Intersection::new(1.8589, shape)];
+            let xs = vec![Intersection::new(1.8589, shape, None)];
             let comps = xs[0].precompute(r, &xs).unwrap();
             assert_relative_eq!(comps.schlick(), 0.48873, max_relative = 0.00001);
         }

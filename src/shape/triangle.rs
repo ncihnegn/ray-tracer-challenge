@@ -9,7 +9,6 @@ use derive_more::Constructor;
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Triangle<T> {
     pub transform: Matrix4<T>,
-    pub material: Material<T>,
     pub p1: Point3<T>,
     pub p2: Point3<T>,
     pub p3: Point3<T>,
@@ -18,18 +17,17 @@ pub struct Triangle<T> {
     pub normal: Vector3<T>,
 }
 
-impl<T: BaseFloat + Default> Default for Triangle<T> {
+impl<T: BaseFloat> Default for Triangle<T> {
     fn default() -> Triangle<T> {
         Triangle::from(Point3::origin(), Point3::origin(), Point3::origin())
     }
 }
 
-impl<T: BaseFloat + Default> Triangle<T> {
+impl<T: BaseFloat> Triangle<T> {
     pub fn from(p1: Point3<T>, p2: Point3<T>, p3: Point3<T>) -> Triangle<T> {
         let (e1, e2) = (p2 - p1, p3 - p1);
         Triangle {
             transform: Matrix4::identity(),
-            material: Material::default(),
             p1,
             p2,
             p3,
@@ -43,10 +41,6 @@ impl<T: BaseFloat + Default> Triangle<T> {
 impl<T: BaseFloat> Triangle<T> {
     pub fn transform(&self) -> Matrix4<T> {
         self.transform
-    }
-
-    pub fn material(&self) -> Material<T> {
-        self.material
     }
 
     pub fn bounds(&self) -> Bounds<T> {
@@ -67,7 +61,11 @@ impl<T: BaseFloat> Triangle<T> {
                 let v = f * ray.direction.dot(origin_cross_e1);
                 if v >= T::zero() && (u + v) <= T::one() {
                     let t = f * self.e2.dot(origin_cross_e1);
-                    return vec![Intersection::new(t, Shape::Triangle(self.clone()))];
+                    return vec![Intersection::new(
+                        t,
+                        Shape::Triangle(self.clone()),
+                        Some((u, v)),
+                    )];
                 }
             }
         }
@@ -109,7 +107,7 @@ mod tests {
         );
         assert_eq!(
             t.local_intersect(Ray::new(Point3::new(0., 0.5, -2.), Vector3::unit_z())),
-            vec![Intersection::new(2., shape)]
+            vec![Intersection::new(2., shape, Some((0.25, 0.25)))]
         );
     }
 

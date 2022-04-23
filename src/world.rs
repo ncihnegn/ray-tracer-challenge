@@ -142,7 +142,7 @@ mod tests {
     fn shade_hit() {
         {
             let mut w = World::default();
-            let xs = vec![Intersection::new(4., w.objects[0].clone())];
+            let xs = vec![Intersection::new(4., w.objects[0].clone(), None)];
             assert_relative_eq!(
                 w.shade_hit(
                     &xs[0]
@@ -156,7 +156,7 @@ mod tests {
         {
             let mut w = World::default();
             w.light = Light::new(Point3::new(0., 0.25, 0.), RGB::new(1., 1., 1.));
-            let xs = vec![Intersection::new(0.5, w.objects[1].clone())];
+            let xs = vec![Intersection::new(0.5, w.objects[1].clone(), None)];
             assert_relative_eq!(
                 w.shade_hit(
                     &xs[0]
@@ -178,7 +178,7 @@ mod tests {
                 Point3::from_vec(Vector3::unit_z() * -3.),
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
-            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape)];
+            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape, None)];
             let comps = xs[0].precompute(r, &xs).unwrap();
             assert_relative_eq!(
                 w.shade_hit(&comps),
@@ -203,7 +203,7 @@ mod tests {
                 Point3::from_vec(Vector3::unit_z() * -3.),
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
-            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape)];
+            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape, None)];
             let comps = xs[0].precompute(r, &xs).unwrap();
             assert_relative_eq!(
                 w.shade_hit(&comps),
@@ -229,7 +229,7 @@ mod tests {
                 Point3::from_vec(Vector3::unit_z() * -3.),
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
-            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape)];
+            let xs = vec![Intersection::new(2.0_f32.sqrt(), shape, None)];
             let comps = xs[0].precompute(r, &xs).unwrap();
             assert_relative_eq!(
                 w.shade_hit(&comps),
@@ -283,7 +283,7 @@ mod tests {
         {
             let r = Ray::new(Point3::origin(), Vector3::unit_z());
             w.objects[1].as_sphere_mut().unwrap().material.ambient = 1.;
-            let i = Intersection::new(1., w.objects[1].clone());
+            let i = Intersection::new(1., w.objects[1].clone(), None);
             let comps = i.precompute(r, &xs).unwrap();
             assert_eq!(w.reflected_color(&comps), RGB::default());
         }
@@ -297,7 +297,7 @@ mod tests {
                 Point3::from_vec(Vector3::unit_z() * -3.),
                 Vector3::new(0., -FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             );
-            let i = Intersection::new(2.0_f32.sqrt(), shape);
+            let i = Intersection::new(2.0_f32.sqrt(), shape, None);
             let comps = i.precompute(r, &xs).unwrap();
             w.recursion = 0;
             assert_eq!(w.reflected_color(&comps), RGB::default());
@@ -337,8 +337,8 @@ mod tests {
             let mut w = World::default();
             let shape = w.objects[0].clone();
             let xs = vec![
-                Intersection::new(4., shape.clone()),
-                Intersection::new(6., shape),
+                Intersection::new(4., shape.clone(), None),
+                Intersection::new(6., shape, None),
             ];
             let comps = xs[0]
                 .precompute(Ray::new(Point3::from_vec(vz * -5.), vz), &xs)
@@ -355,8 +355,8 @@ mod tests {
                 .refractive_index = 1.5;
             let shape = w.objects[0].clone();
             let xs = vec![
-                Intersection::new(-FRAC_1_SQRT_2, shape.clone()),
-                Intersection::new(FRAC_1_SQRT_2, shape),
+                Intersection::new(-FRAC_1_SQRT_2, shape.clone(), None),
+                Intersection::new(FRAC_1_SQRT_2, shape, None),
             ];
             let comps = xs[1]
                 .precompute(
@@ -378,10 +378,10 @@ mod tests {
                 .material
                 .refractive_index = 1.5;
             let xs = vec![
-                Intersection::new(-0.9899, w.objects[0].clone()),
-                Intersection::new(-0.4899, w.objects[1].clone()),
-                Intersection::new(0.4899, w.objects[1].clone()),
-                Intersection::new(0.9899, w.objects[0].clone()),
+                Intersection::new(-0.9899, w.objects[0].clone(), None),
+                Intersection::new(-0.4899, w.objects[1].clone(), None),
+                Intersection::new(0.4899, w.objects[1].clone(), None),
+                Intersection::new(0.9899, w.objects[0].clone(), None),
             ];
             let comps = xs[2]
                 .precompute(Ray::new(Point3::from_vec(vz * 0.1), Vector3::unit_y()), &xs)
