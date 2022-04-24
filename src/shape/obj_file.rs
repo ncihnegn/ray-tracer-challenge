@@ -1,27 +1,51 @@
-use crate::shape::{get_link, group::push, Group, Shape, ShapeLink, ShapeWrapper, Triangle};
-use cgmath::{BaseFloat, Point3};
-use std::{cell::RefCell, collections::HashMap, rc::Rc, str::FromStr};
+use crate::{
+    material::Material,
+    shape::{get_link, group::push, Group, Shape, ShapeLink, SmoothTriangle, Triangle},
+};
+use cgmath::{BaseFloat, Point3, Vector3};
+use std::{collections::HashMap, str::FromStr};
 
 pub struct Parser<T> {
     groups: HashMap<String, ShapeLink<T>>,
     vertices: Vec<Point3<T>>,
+    normals: Vec<Vector3<T>>,
 }
 
 fn fan_tranigulation<T: BaseFloat + Default>(
-    vertices: &Vec<Point3<T>>,
-    index: &Vec<usize>,
-) -> Vec<Triangle<T>> {
+    vertices: &[Point3<T>],
+    normals: &[Vector3<T>],
+    index: &[Vec<Option<usize>>],
+) -> Vec<Shape<T>> {
     // Assuming a convex polygon
     (1..index.len() - 1)
-        .map(|i| index[i])
-        .map(|i| Triangle::from(vertices[index[0]], vertices[i], vertices[i + 1]))
+        .map(|i| &index[i])
+        .map(|v| {
+            if v.len() == 1 {
+                Shape::Triangle(Triangle::from(
+                    vertices[index[0][0].unwrap() - 1],
+                    vertices[v[0].unwrap() - 1],
+                    vertices[v[0].unwrap()],
+                ))
+            } else {
+                Shape::SmoothTriangle(SmoothTriangle::new(
+                    Material::default(),
+                    vertices[index[0][0].unwrap() - 1],
+                    vertices[v[0].unwrap() - 1],
+                    vertices[v[0].unwrap()],
+                    normals[index[0][2].unwrap() - 1],
+                    normals[v[2].unwrap() - 1],
+                    normals[v[2].unwrap()],
+                ))
+            }
+        })
         .collect::<Vec<_>>()
 }
 
 impl<T: BaseFloat + FromStr + Default> Parser<T> {
     pub fn parse_obj_file(s: &str) -> Parser<T> {
         let mut vertices = Vec::new();
-        let mut group = Group::default();
+        let mut normals = Vec::new();
+        let group = Group::default();
         let mut groups = HashMap::new();
         groups.insert("default".to_string(), get_link(Shape::Group(group)));
         let mut current_label = "default";
@@ -30,32 +54,44 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
             match iter.next() {
                 Some("f") => {
                     let index = iter
-                        .map(|s| usize::from_str(s).unwrap() - 1)
+                        .map(|s| {
+                            s.split_terminator('/')
+                                .map(|s| usize::from_str(s).ok())
+                                .collect::<Vec<_>>()
+                        })
                         .collect::<Vec<_>>();
-                    for tri in fan_tranigulation(&vertices, &index) {
-                        push(&groups.get(current_label).unwrap(), Shape::Triangle(tri));
+                    for tri in fan_tranigulation(&vertices, &normals, &index) {
+                        push(groups.get(current_label).unwrap(), tri);
                     }
                 }
                 Some("g") => {
                     if let Some(label) = iter.next() {
-                        let mut group = Group::default();
+                        let group = Group::default();
                         groups.insert(label.to_string(), get_link(Shape::Group(group)));
                         current_label = label;
                     }
                 }
                 Some("l") => {}
                 Some("v") => vertices.push(Point3::new(
-                    T::from_str(iter.next().unwrap()).unwrap_or(T::zero()),
-                    T::from_str(iter.next().unwrap()).unwrap_or(T::zero()),
-                    T::from_str(iter.next().unwrap()).unwrap_or(T::zero()),
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
                 )),
-                Some("vn") => {}
+                Some("vn") => normals.push(Vector3::new(
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
+                    T::from_str(iter.next().unwrap()).unwrap_or_default(),
+                )),
                 Some("vp") => {}
                 Some("vt") => {}
                 _ => {}
             }
         }
-        Parser { groups, vertices }
+        Parser {
+            groups,
+            vertices,
+            normals,
+        }
     }
 
     pub fn obj_to_group(self) -> ShapeLink<T> {
@@ -240,6 +276,44 @@ mod tests {
                     Point3::new(-1., 1., 0.),
                     Point3::new(1., 0., 0.),
                     Point3::new(1., 1., 0.),
+                ))
+            );
+        }
+        {
+            let parser = Parser::<f32>::parse_obj_file(
+                r#"
+                v 0 1 0
+                v -1 0 0
+                v 1 0 0
+
+                vn -1 0 0
+                vn 1 0 0
+                vn 0 1 0
+
+                f 1//3 2//1 3//2
+                f 1/0/3 2/102/1 3/14/2
+                "#,
+            );
+            let children = parser
+                .groups
+                .get("default")
+                .unwrap()
+                .borrow()
+                .shape
+                .as_group()
+                .unwrap()
+                .children
+                .clone();
+            assert_eq!(
+                children[0].borrow().shape,
+                Shape::SmoothTriangle(SmoothTriangle::new(
+                    Material::default(),
+                    Point3::new(0., 1., 0.),
+                    Point3::new(-1., 0., 0.),
+                    Point3::new(1., 0., 0.),
+                    Vector3::unit_y(),
+                    -Vector3::unit_x(),
+                    Vector3::unit_x(),
                 ))
             );
         }

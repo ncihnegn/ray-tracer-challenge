@@ -3,14 +3,11 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{get_link, get_link_with_parent, Shape, ShapeLink, ShapeWrapper},
+    shape::{get_link_with_parent, Shape, ShapeLink},
 };
-use cgmath::{
-    abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix,
-    Vector3,
-};
+use cgmath::{BaseFloat, Matrix4, SquareMatrix};
 use derive_more::Constructor;
-use std::{cell::RefCell, cmp::Ordering::Less, fmt::Debug, rc::Rc};
+use std::{cmp::Ordering::Less, fmt::Debug};
 
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Group<T> {
@@ -77,9 +74,13 @@ impl<T: BaseFloat + Debug> Group<T> {
 
 mod tests {
     use super::*;
-    use crate::shape::sphere::Sphere;
-    use cgmath::{assert_relative_eq, Rad, Zero};
-    use std::f32::consts::{FRAC_PI_2, PI, SQRT_2};
+    use crate::shape::{get_link, ShapeWrapper, Sphere};
+    use cgmath::{assert_relative_eq, EuclideanSpace, Point3, Rad, Vector3, Zero};
+    use std::{
+        cell::RefCell,
+        f32::consts::{FRAC_PI_2, PI, SQRT_2},
+        rc::Rc,
+    };
 
     #[test]
     fn bounds() {

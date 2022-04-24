@@ -1,10 +1,9 @@
 use crate::{
     computation::Computation,
-    material::Material,
     ray::Ray,
-    shape::{plane::Plane, reflect, sphere::Sphere, Shape},
+    shape::{reflect, Shape},
 };
-use cgmath::{dot, BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix, Vector3};
+use cgmath::{dot, BaseFloat};
 use derive_more::Constructor;
 use std::cmp::Ordering::Less;
 
@@ -68,6 +67,11 @@ pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
 
 mod tests {
     use super::*;
+    use crate::{
+        material::Material,
+        shape::{plane::Plane, sphere::Sphere},
+    };
+    use cgmath::{EuclideanSpace, Matrix4, Point3, SquareMatrix, Vector3};
     use std::f32::{consts::FRAC_1_SQRT_2, EPSILON};
 
     #[test]

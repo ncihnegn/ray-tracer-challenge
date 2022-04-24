@@ -1,6 +1,4 @@
-use crate::{
-    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
-};
+use crate::{bounds::Bounds, intersection::Intersection, ray::Ray, shape::Shape};
 use cgmath::{
     abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };

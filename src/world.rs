@@ -3,9 +3,9 @@ use crate::{
     intersection::{hit, Intersection},
     light::Light,
     material::Material,
-    pattern::{test::Test, Pattern},
+    pattern::Pattern,
     ray::Ray,
-    shape::{plane::Plane, sphere::Sphere, Shape},
+    shape::{sphere::Sphere, Shape},
 };
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3, SquareMatrix};
 use derive_more::Constructor;
@@ -134,6 +134,7 @@ impl<T: BaseFloat + Default> World<T> {
 
 mod tests {
     use super::*;
+    use crate::{pattern::test::Test, shape::plane::Plane};
     use approx::assert_relative_eq;
     use cgmath::{EuclideanSpace, Vector3};
     use std::f32::consts::FRAC_1_SQRT_2;

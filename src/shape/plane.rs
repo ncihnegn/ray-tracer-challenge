@@ -1,9 +1,7 @@
 use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
-use cgmath::{
-    abs_diff_eq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
-};
+use cgmath::{abs_diff_eq, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
 #[derive(Clone, Constructor, Debug, PartialEq)]
@@ -55,7 +53,7 @@ impl<T: BaseFloat> Plane<T> {
 
 mod tests {
     use super::*;
-    use cgmath::assert_relative_eq;
+    use cgmath::{assert_relative_eq, EuclideanSpace};
 
     #[test]
     fn local_intersect() {

@@ -1,12 +1,5 @@
-use crate::{
-    impl_approx,
-    intersection::Intersection,
-    shape::{sphere::Sphere, Shape},
-};
-use cgmath::{
-    AbsDiffEq, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, RelativeEq, SquareMatrix,
-    UlpsEq, Vector3,
-};
+use crate::impl_approx;
+use cgmath::{AbsDiffEq, BaseFloat, Matrix4, Point3, RelativeEq, UlpsEq, Vector3};
 use derive_more::Constructor;
 
 #[derive(Clone, Constructor, Copy, Debug, PartialEq)]

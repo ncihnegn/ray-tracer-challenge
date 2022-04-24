@@ -1,5 +1,5 @@
 use crate::pattern::TraitPattern;
-use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix};
+use cgmath::{BaseFloat, Matrix4, Point3};
 use derive_more::Constructor;
 use rgb::RGB;
 
@@ -20,6 +20,7 @@ impl<T: BaseFloat> TraitPattern<T> for Test<T> {
 
 mod tests {
     use super::*;
+    use cgmath::{EuclideanSpace, SquareMatrix};
 
     #[test]
     fn at() {

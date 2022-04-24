@@ -1,10 +1,7 @@
 use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
-use cgmath::{
-    abs_diff_eq, abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix,
-    Vector3,
-};
+use cgmath::{abs_diff_eq, abs_diff_ne, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 use std::{cmp::Ordering::Less, fmt::Debug};
 
@@ -131,8 +128,7 @@ impl<T: BaseFloat + Debug> Cone<T> {
 
 mod tests {
     use super::*;
-    use crate::shape::cone;
-    use cgmath::{assert_relative_eq, Rad, Zero};
+    use cgmath::{assert_relative_eq, EuclideanSpace, InnerSpace, Rad, Zero};
     use std::f32::consts::{PI, SQRT_2};
 
     #[test]

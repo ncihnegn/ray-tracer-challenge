@@ -1,11 +1,10 @@
 use crate::{
-    bounds::Bounds,
     intersection::Intersection,
     material::Material,
     ray::Ray,
     shape::{Shape, Triangle},
 };
-use cgmath::{abs_diff_ne, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
+use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 use derive_more::Constructor;
 
 #[derive(Clone, Constructor, Debug, PartialEq)]

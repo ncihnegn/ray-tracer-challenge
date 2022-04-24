@@ -5,7 +5,6 @@ pub mod stripe;
 pub mod test;
 
 use crate::{
-    material::Material,
     pattern::{checker::Checker, gradient::Gradient, ring::Ring, stripe::Stripe, test::Test},
     shape::{Shape, ShapeWrapper},
 };
@@ -69,7 +68,7 @@ impl<T: BaseFloat> TraitPattern<T> for RGB<T> {
 
 mod tests {
     use super::*;
-    use crate::shape::sphere::Sphere;
+    use crate::{material::Material, shape::sphere::Sphere};
     use cgmath::Vector3;
 
     #[test]

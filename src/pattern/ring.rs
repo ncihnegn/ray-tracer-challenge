@@ -1,5 +1,5 @@
 use crate::pattern::TraitPattern;
-use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix};
+use cgmath::{BaseFloat, Matrix4, Point3};
 use derive_more::Constructor;
 use num_traits::cast;
 use rgb::RGB;
@@ -28,7 +28,7 @@ impl<T: BaseFloat> TraitPattern<T> for Ring<T> {
 
 mod tests {
     use super::*;
-    use cgmath::Vector3;
+    use cgmath::{EuclideanSpace, SquareMatrix, Vector3};
 
     #[test]
     fn at() {
