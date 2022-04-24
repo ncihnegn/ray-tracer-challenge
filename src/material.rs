@@ -15,7 +15,7 @@ pub struct Material<T> {
     pub refractive_index: T,
 }
 
-impl<T: BaseFloat + Default> Default for Material<T> {
+impl<T: BaseFloat> Default for Material<T> {
     fn default() -> Material<T> {
         let one = T::one();
         Material::<T> {

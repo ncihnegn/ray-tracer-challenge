@@ -1,4 +1,6 @@
-use crate::{bounds::Bounds, intersection::Intersection, ray::Ray, shape::Shape};
+use crate::{
+    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+};
 use cgmath::{
     abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };
@@ -7,6 +9,7 @@ use derive_more::Constructor;
 #[derive(Clone, Constructor, Debug, PartialEq)]
 pub struct Triangle<T> {
     pub transform: Matrix4<T>,
+    pub material: Material<T>,
     pub p1: Point3<T>,
     pub p2: Point3<T>,
     pub p3: Point3<T>,
@@ -26,6 +29,7 @@ impl<T: BaseFloat> Triangle<T> {
         let (e1, e2) = (p2 - p1, p3 - p1);
         Triangle {
             transform: Matrix4::identity(),
+            material: Material::default(),
             p1,
             p2,
             p3,
@@ -40,11 +44,12 @@ impl<T: BaseFloat> Triangle<T> {
     pub fn transform(&self) -> Matrix4<T> {
         self.transform
     }
+    pub fn material(&self) -> Material<T> {
+        self.material
+    }
 
     pub fn bounds(&self) -> Bounds<T> {
-        let max = Point3::new(T::max_value(), T::zero(), T::max_value());
-        let min = Point3::new(T::min_value(), T::zero(), T::min_value());
-        Bounds::new(min, max)
+        Bounds::from_all_points(&[self.p1, self.p2, self.p3]).unwrap()
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {

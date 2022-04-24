@@ -1,4 +1,5 @@
 use crate::{
+    bounds::Bounds,
     intersection::Intersection,
     material::Material,
     ray::Ray,
@@ -24,6 +25,9 @@ impl<T: BaseFloat> SmoothTriangle<T> {
     }
     pub fn material(&self) -> Material<T> {
         self.material
+    }
+    pub fn bounds(&self) -> Bounds<T> {
+        Bounds::from_all_points(&[self.p1, self.p2, self.p3]).unwrap()
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {

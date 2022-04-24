@@ -64,7 +64,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Plane(p) => Some(p.material()),
             Shape::SmoothTriangle(s) => Some(s.material()),
             Shape::Sphere(s) => Some(s.material()),
-            Shape::Triangle(_) => None,
+            Shape::Triangle(t) => Some(t.material()),
         }
     }
 
@@ -75,7 +75,7 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Cylinder(c) => Some(c.bounds()),
             Shape::Group(g) => g.bounds(),
             Shape::Plane(p) => Some(p.bounds()),
-            Shape::SmoothTriangle(_) => None,
+            Shape::SmoothTriangle(s) => Some(s.bounds()),
             Shape::Sphere(s) => Some(s.bounds()),
             Shape::Triangle(t) => Some(t.bounds()),
         }
