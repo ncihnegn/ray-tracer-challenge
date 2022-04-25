@@ -62,7 +62,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn material(&self) -> Option<Material<T>> {
         match self {
             Shape::Cone(c) => Some(c.material()),
-            Shape::ConstructiveSolidGeometry(c) => None,
+            Shape::ConstructiveSolidGeometry(_) => None,
             Shape::Cube(c) => Some(c.material()),
             Shape::Cylinder(c) => Some(c.material()),
             Shape::Group(_) => None,
