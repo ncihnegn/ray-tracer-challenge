@@ -1,4 +1,5 @@
 pub mod cone;
+pub mod constructive_solid_geometry;
 pub mod cube;
 pub mod cylinder;
 pub mod group;
@@ -14,8 +15,9 @@ use crate::{
     material::Material,
     ray::Ray,
     shape::{
-        cone::Cone, cube::Cube, cylinder::Cylinder, group::Group, plane::Plane,
-        smooth_triangle::SmoothTriangle, sphere::Sphere, triangle::Triangle,
+        cone::Cone, constructive_solid_geometry::ConstructiveSolidGeometry, cube::Cube,
+        cylinder::Cylinder, group::Group, plane::Plane, smooth_triangle::SmoothTriangle,
+        sphere::Sphere, triangle::Triangle,
     },
 };
 use cgmath::{
@@ -32,6 +34,7 @@ use std::{
 #[derive(Clone, Debug, EnumAsInner, PartialEq)]
 pub enum Shape<T> {
     Cone(Cone<T>),
+    ConstructiveSolidGeometry(ConstructiveSolidGeometry<T>),
     Cube(Cube<T>),
     Cylinder(Cylinder<T>),
     Group(Group<T>),
@@ -45,6 +48,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn transform(&self) -> Matrix4<T> {
         match self {
             Shape::Cone(c) => c.transform(),
+            Shape::ConstructiveSolidGeometry(c) => c.transform(),
             Shape::Cube(c) => c.transform(),
             Shape::Cylinder(c) => c.transform(),
             Shape::Group(g) => g.transform(),
@@ -58,6 +62,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn material(&self) -> Option<Material<T>> {
         match self {
             Shape::Cone(c) => Some(c.material()),
+            Shape::ConstructiveSolidGeometry(c) => None,
             Shape::Cube(c) => Some(c.material()),
             Shape::Cylinder(c) => Some(c.material()),
             Shape::Group(_) => None,
@@ -71,6 +76,7 @@ impl<T: BaseFloat> Shape<T> {
     pub fn bounds(&self) -> Option<Bounds<T>> {
         match self {
             Shape::Cone(c) => Some(c.bounds()),
+            Shape::ConstructiveSolidGeometry(c) => Some(c.bounds()),
             Shape::Cube(c) => Some(c.bounds()),
             Shape::Cylinder(c) => Some(c.bounds()),
             Shape::Group(g) => g.bounds(),
@@ -80,15 +86,25 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Triangle(t) => Some(t.bounds()),
         }
     }
+    pub fn include(&self, other: &Shape<T>) -> bool {
+        match self {
+            Shape::Group(g) => g.children.iter().any(|c| c.borrow().shape.include(other)),
+            Shape::ConstructiveSolidGeometry(c) => {
+                c.left.borrow().shape.include(other) || c.right.borrow().shape.include(other)
+            }
+            _ => self == other,
+        }
+    }
 
     fn local_normal_at(&self, point: Point3<T>, uv: Option<(T, T)>) -> Vector3<T> {
         match self {
             Shape::Cone(c) => c.local_normal_at(point),
+            Shape::ConstructiveSolidGeometry(_) =>
+                panic!("The local_normal_at() is not supposed to by called on Shape::ConstructiveSolidGeometry."),
             Shape::Cube(c) => c.local_normal_at(point),
             Shape::Cylinder(c) => c.local_normal_at(point),
-            Shape::Group(_) => {
-                panic!("The local_normal_at() is not supposed to by called on Shape::Group.")
-            }
+            Shape::Group(_) =>
+                panic!("The local_normal_at() is not supposed to by called on Shape::Group."),
             Shape::Plane(p) => p.local_normal_at(point),
             Shape::SmoothTriangle(s) => s.local_normal_at(point, uv),
             Shape::Sphere(s) => s.local_normal_at(point),
@@ -99,6 +115,7 @@ impl<T: BaseFloat> Shape<T> {
     fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         match self {
             Shape::Cone(c) => c.local_intersect(ray),
+            Shape::ConstructiveSolidGeometry(c) => c.local_intersect(ray),
             Shape::Cube(c) => c.local_intersect(ray),
             Shape::Cylinder(c) => c.local_intersect(ray),
             Shape::Group(g) => g.local_intersect(ray),
