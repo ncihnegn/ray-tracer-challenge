@@ -1,14 +1,14 @@
-mod bounds;
-mod camera;
-mod canvas;
-mod computation;
-mod intersection;
-mod light;
-mod material;
-mod pattern;
-mod ray;
-mod shape;
-mod world;
+pub mod bounds;
+pub mod camera;
+pub mod canvas;
+pub mod computation;
+pub mod intersection;
+pub mod light;
+pub mod material;
+pub mod pattern;
+pub mod ray;
+pub mod shape;
+pub mod world;
 
 #[macro_export]
 macro_rules! impl_approx {

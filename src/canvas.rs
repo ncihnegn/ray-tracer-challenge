@@ -18,7 +18,7 @@ impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
         }
     }
 
-    fn to_ppm(&self) -> String {
+    pub fn to_ppm(&self) -> String {
         let mut ppm: String = format!("P3\n{} {}\n{}\n", self.width, self.height, u8::MAX);
         const LINE_LEN_LIMIT: usize = 70;
         for r in &self.pixels {

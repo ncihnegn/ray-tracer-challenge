@@ -28,7 +28,6 @@ fn intersection_allowed(op: Operation, lhit: bool, inl: bool, inr: bool) -> bool
         Operation::Union => (lhit & !inr) | (!lhit & !inl),
         Operation::Intersect => (lhit & inr) | (!lhit & inl),
         Operation::Difference => (lhit & !inr) | (!lhit & inl),
-        _ => false,
     }
 }
 
