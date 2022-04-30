@@ -138,10 +138,7 @@ impl<T: BaseFloat> Shape<T> {
         self.transform().invert().map(|i| {
             (i.transpose()
                 * self
-                    .local_normal_at(
-                        Point3::from_vec((i * point.to_homogeneous()).truncate()),
-                        uv,
-                    )
+                    .local_normal_at(Point3::from_homogeneous(i * point.to_homogeneous()), uv)
                     .extend(T::zero()))
             .truncate()
             .normalize()
@@ -184,7 +181,7 @@ impl<T: BaseFloat> ShapeWrapper<T> {
         self.shape
             .transform()
             .invert()
-            .and_then(|i| o.map(|p| Point3::from_vec((i * p.to_homogeneous()).truncate())))
+            .and_then(|i| o.map(|p| Point3::from_homogeneous(i * p.to_homogeneous())))
     }
 
     fn normal_to_world(&self, normal: Vector3<T>) -> Option<Vector3<T>> {

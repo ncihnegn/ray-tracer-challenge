@@ -243,29 +243,25 @@ mod tests {
     #[test]
     fn color_at() {
         let mut w = World::default();
-        {
-            assert_eq!(
-                w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_y())),
-                RGB::default()
-            );
-            assert_relative_eq!(
-                w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
-                RGB::new(0.38066, 0.47583, 0.2855),
-                max_relative = 0.0001
-            );
-        }
-        {
-            w.objects[0].as_sphere_mut().unwrap().material.ambient = 1.;
-            w.objects[1].as_sphere_mut().unwrap().material.ambient = 1.;
-            assert_eq!(
-                w.color_at(Ray::new(Point3::new(0., 0., 0.75), -Vector3::unit_z())),
-                w.objects[1]
-                    .material()
-                    .unwrap()
-                    .pattern
-                    .at(Point3::origin())
-            );
-        }
+        assert_eq!(
+            w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_y())),
+            RGB::default()
+        );
+        assert_relative_eq!(
+            w.color_at(Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z())),
+            RGB::new(0.38066, 0.47583, 0.2855),
+            max_relative = 0.0001
+        );
+        w.objects[0].as_sphere_mut().unwrap().material.ambient = 1.;
+        w.objects[1].as_sphere_mut().unwrap().material.ambient = 1.;
+        assert_eq!(
+            w.color_at(Ray::new(Point3::new(0., 0., 0.75), -Vector3::unit_z())),
+            w.objects[1]
+                .material()
+                .unwrap()
+                .pattern
+                .at(Point3::origin())
+        );
     }
 
     #[test]

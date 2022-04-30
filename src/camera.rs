@@ -46,11 +46,13 @@ impl<T: BaseFloat + Default + Display> Camera<T> {
         let world_y = self.half_height - yoffset;
         let inverse = self.transform.invert().unwrap();
         let negone = T::from(-1).unwrap();
-        let pixel = inverse * Point3::new(world_x, world_y, negone).to_homogeneous();
-        let origin = inverse * Point3::origin().to_homogeneous();
+        let pixel = Point3::from_homogeneous(
+            inverse * Point3::new(world_x, world_y, negone).to_homogeneous(),
+        );
+        let origin = Point3::from_homogeneous(inverse * Point3::origin().to_homogeneous());
         Ray::new(
-            Point3::origin() + origin.truncate(),
-            (pixel - origin).truncate().normalize(),
+            Point3::origin() + origin.to_vec(),
+            (pixel - origin).normalize(),
         )
     }
 

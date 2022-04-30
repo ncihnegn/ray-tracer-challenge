@@ -42,14 +42,14 @@ pub trait TraitPattern<T: BaseFloat> {
     fn at_shape(&self, object: Shape<T>, world_point: Point3<T>) -> RGB<T> {
         let object_point = object.transform().invert().unwrap() * world_point.to_homogeneous();
         let pattern_point =
-            Point3::from_vec((self.transform().invert().unwrap() * object_point).truncate());
+            Point3::from_homogeneous(self.transform().invert().unwrap() * object_point);
         self.at(pattern_point)
     }
 
     fn at_shape_wrapper(&self, object: &ShapeWrapper<T>, world_point: Point3<T>) -> Option<RGB<T>> {
         object.world_to_object(world_point).map(|object_point| {
-            let pattern_point = Point3::from_vec(
-                (self.transform().invert().unwrap() * object_point.to_homogeneous()).truncate(),
+            let pattern_point = Point3::from_homogeneous(
+                self.transform().invert().unwrap() * object_point.to_homogeneous(),
             );
             self.at(pattern_point)
         })

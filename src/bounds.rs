@@ -101,7 +101,7 @@ impl<T: BaseFloat> Bounds<T> {
     pub fn transform(&self, transform: Matrix4<T>) -> Vec<Point3<T>> {
         self.all_points()
             .iter()
-            .map(|p| Point3::from_vec((transform * p.to_homogeneous()).truncate()))
+            .map(|p| Point3::from_homogeneous(transform * p.to_homogeneous()))
             .collect::<Vec<_>>()
     }
 
