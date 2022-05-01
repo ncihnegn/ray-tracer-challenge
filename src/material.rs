@@ -36,7 +36,7 @@ impl<T: BaseFloat + Default> Material<T> {
         &self,
         light: Light<T>,
         point: Point3<T>,
-        eyev: Vector3<T>,
+        eyev: Vector3<T>, //The vector eyev must be normalized.
         normalv: Vector3<T>,
         in_shadow: bool,
     ) -> RGB<T> {

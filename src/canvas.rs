@@ -1,7 +1,5 @@
 use cgmath::BaseFloat;
-use num_traits::cast;
 use rgb::RGB;
-use std::fmt::Display;
 
 pub struct Canvas<T> {
     pub width: usize,
@@ -9,7 +7,7 @@ pub struct Canvas<T> {
     pub pixels: Vec<Vec<T>>, // column-major
 }
 
-impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
+impl<T: BaseFloat + Default> Canvas<RGB<T>> {
     pub fn new(width: usize, height: usize) -> Canvas<RGB<T>> {
         Canvas::<RGB<T>> {
             width,
@@ -17,21 +15,21 @@ impl<T: BaseFloat + Default + Display> Canvas<RGB<T>> {
             pixels: vec![vec!(RGB::default(); width); height],
         }
     }
+}
 
+impl<T: BaseFloat + std::fmt::Display> Canvas<RGB<T>> {
     pub fn to_ppm(&self) -> String {
         let mut ppm: String = format!("P3\n{} {}\n{}\n", self.width, self.height, u8::MAX);
         const LINE_LEN_LIMIT: usize = 70;
         for r in &self.pixels {
             let mut line_len = 0;
             for c in r {
-                let max: T = cast(u8::MAX).unwrap();
                 for cc in [c.r, c.g, c.b] {
-                    let str = (cc * max)
-                        .round()
-                        //.clamp(T::zero(), max) is not available
-                        .max(T::zero())
-                        .min(max)
-                        .to_string();
+                    // T.clamp(T::zero(), T::one()) is not available
+                    let str = (cc.max(T::zero()).min(T::one())
+                        * num_traits::cast(u8::MAX).unwrap())
+                    .round()
+                    .to_string();
                     if line_len + str.len() > LINE_LEN_LIMIT {
                         ppm.pop();
                         ppm.push('\n');
