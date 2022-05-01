@@ -1,4 +1,4 @@
-use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Point3, Vector3};
+use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
 use ray_tracer_challenge::canvas::Canvas;
 use rgb::RGB;
 use std::fs;
