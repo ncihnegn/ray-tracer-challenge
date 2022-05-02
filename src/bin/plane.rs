@@ -1,5 +1,5 @@
 // Using f32 will bring acnes while over_point is not necessary.
-use std::f64::consts::{FRAC_PI_2, FRAC_PI_3, FRAC_PI_4};
+use std::f64::consts::FRAC_PI_3;
 
 use cgmath::{Matrix4, Point3, SquareMatrix, Vector3};
 use ray_tracer_challenge::{
