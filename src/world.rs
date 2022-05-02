@@ -13,8 +13,8 @@ use rgb::RGB;
 
 #[derive(Constructor, Debug)]
 pub struct World<T> {
-    light: Light<T>,
-    objects: Vec<Shape<T>>,
+    pub light: Light<T>,
+    pub objects: Vec<Shape<T>>,
     recursion: u8,
 }
 
@@ -23,10 +23,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
         let neg10 = T::from(-10).unwrap();
         let one = T::one();
         World::<T> {
-            light: Light::new(
-                Point3::new(neg10, T::from(10).unwrap(), neg10),
-                RGB::new(one, one, one),
-            ),
+            light: Light::new(Point3::new(neg10, -neg10, neg10), RGB::new(one, one, one)),
             objects: vec![
                 Shape::Sphere(Sphere::new(
                     Matrix4::identity(),
@@ -55,8 +52,13 @@ impl<T: BaseFloat + Default> World<T> {
     fn shade_hit(&mut self, comps: &Computation<T>) -> RGB<T> {
         let shadowed = self.is_shadowed(comps.over_point());
         let material = comps.object.material().unwrap();
-        let surface =
-            material.lighting(self.light, comps.point, comps.eyev, comps.normalv, shadowed);
+        let surface = material.lighting(
+            self.light,
+            comps.over_point(),
+            comps.eyev,
+            comps.normalv,
+            shadowed,
+        );
         let reflected = self.reflected_color(comps);
         let refracted = self.refracted_color(comps);
         if material.reflective > T::zero() && material.transparency > T::zero() {

@@ -43,9 +43,9 @@ impl<T: BaseFloat + Default> Material<T> {
         let effective_color = self.pattern.at(point) * light.intensity;
         let lightv = (light.position - point).normalize();
         let ambient = effective_color * self.ambient;
+        let light_dot_normal = lightv.dot(normalv);
         let mut diffuse = RGB::default();
         let mut specular = RGB::default();
-        let light_dot_normal = lightv.dot(normalv);
         if !in_shadow && light_dot_normal >= T::zero() {
             diffuse = effective_color * self.diffuse * light_dot_normal;
             let reflectv = reflect(-lightv, normalv);
