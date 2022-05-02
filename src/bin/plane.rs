@@ -1,13 +1,13 @@
 // Using f32 will bring acnes while over_point is not necessary.
 use std::f64::consts::{FRAC_PI_2, FRAC_PI_3, FRAC_PI_4};
 
-use cgmath::{Matrix4, Point3, Rad, Vector3};
+use cgmath::{Matrix4, Point3, SquareMatrix, Vector3};
 use ray_tracer_challenge::{
     camera::Camera,
     light::Light,
     material::Material,
     pattern::Pattern,
-    shape::{sphere::Sphere, Shape},
+    shape::{plane::Plane, sphere::Sphere, Shape},
     world::World,
 };
 use rgb::RGB;
@@ -18,26 +18,7 @@ fn main() {
     room_material.pattern = Pattern::Solid(RGB::new(1., 0.9, 0.9));
     room_material.specular = 0.;
 
-    let floor = Sphere::new(
-        Matrix4::from_nonuniform_scale(10., 0.01, 10.),
-        room_material,
-    );
-
-    let left_wall = Sphere::new(
-        Matrix4::from_translation(Vector3::unit_z() * 5.)
-            * Matrix4::from_angle_y(Rad(-FRAC_PI_4))
-            * Matrix4::from_angle_x(Rad(FRAC_PI_2))
-            * floor.transform,
-        room_material,
-    );
-
-    let right_wall = Sphere::new(
-        Matrix4::from_translation(Vector3::unit_z() * 5.)
-            * Matrix4::from_angle_y(Rad(FRAC_PI_4))
-            * Matrix4::from_angle_x(Rad(FRAC_PI_2))
-            * floor.transform,
-        room_material,
-    );
+    let floor = Plane::new(Matrix4::identity(), room_material);
 
     let mut sphere_material = Material::default();
     sphere_material.diffuse = 0.7;
@@ -72,9 +53,7 @@ fn main() {
     let world = World::new(
         light,
         vec![
-            Shape::Sphere(floor),
-            Shape::Sphere(left_wall),
-            Shape::Sphere(right_wall),
+            Shape::Plane(floor),
             Shape::Sphere(left),
             Shape::Sphere(middle),
             Shape::Sphere(right),
@@ -84,5 +63,5 @@ fn main() {
 
     let canvas = camera.render(world);
     let _ = fs::create_dir("output");
-    fs::write("output/spheres.ppm", canvas.to_ppm()).expect("Unable to write file");
+    fs::write("output/plane.ppm", canvas.to_ppm()).expect("Unable to write file");
 }
