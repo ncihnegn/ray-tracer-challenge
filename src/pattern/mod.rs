@@ -8,7 +8,7 @@ use crate::{
     pattern::{checker::Checker, gradient::Gradient, ring::Ring, stripe::Stripe, test::Test},
     shape::{Shape, ShapeWrapper},
 };
-use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3, SquareMatrix};
+use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix};
 use rgb::RGB;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -69,7 +69,7 @@ impl<T: BaseFloat> TraitPattern<T> for RGB<T> {
 mod tests {
     use super::*;
     use crate::{material::Material, shape::sphere::Sphere};
-    use cgmath::Vector3;
+    use cgmath::{EuclideanSpace, Vector3};
 
     #[test]
     fn at() {

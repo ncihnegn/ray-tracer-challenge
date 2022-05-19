@@ -1,10 +1,8 @@
 use crate::pattern::TraitPattern;
 use cgmath::{BaseFloat, Matrix4, Point3};
-use derive_more::Constructor;
-use num_traits::cast;
 use rgb::RGB;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Ring<T> {
     a: RGB<T>,
     b: RGB<T>,
@@ -17,7 +15,7 @@ impl<T: BaseFloat> TraitPattern<T> for Ring<T> {
     }
 
     fn at(&self, point: Point3<T>) -> RGB<T> {
-        let i: i32 = cast((point.x.powi(2) + point.z.powi(2)).sqrt().floor()).unwrap();
+        let i: i32 = num_traits::cast((point.x.powi(2) + point.z.powi(2)).sqrt().floor()).unwrap();
         if i % 2 == 0 {
             self.a
         } else {

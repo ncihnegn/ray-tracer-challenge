@@ -6,9 +6,8 @@ use crate::{
     shape::{Shape, Triangle},
 };
 use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct SmoothTriangle<T> {
     pub material: Material<T>,
     pub p1: Point3<T>,
@@ -20,12 +19,6 @@ pub struct SmoothTriangle<T> {
 }
 
 impl<T: BaseFloat> SmoothTriangle<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        Matrix4::identity()
-    }
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
     pub fn bounds(&self) -> Bounds<T> {
         Bounds::from_all_points(&[self.p1, self.p2, self.p3]).unwrap()
     }

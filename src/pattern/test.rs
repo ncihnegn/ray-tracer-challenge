@@ -1,9 +1,8 @@
 use crate::pattern::TraitPattern;
 use cgmath::{BaseFloat, Matrix4, Point3};
-use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Test<T> {
     transform: Matrix4<T>,
 }

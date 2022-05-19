@@ -1,12 +1,5 @@
-use crate::{
-    bounds::Bounds,
-    intersection::Intersection,
-    ray::Ray,
-    shape::{Shape, ShapeLink},
-};
+use crate::{bounds::Bounds, intersection::Intersection, ray::Ray, shape::ShapeLink};
 use cgmath::{BaseFloat, Matrix4};
-use derive_more::Constructor;
-use std::cmp::Ordering::Less;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operation {
@@ -15,7 +8,7 @@ pub enum Operation {
     Difference,
 }
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct ConstructiveSolidGeometry<T> {
     pub transform: Matrix4<T>,
     pub op: Operation,
@@ -32,12 +25,8 @@ fn intersection_allowed(op: Operation, lhit: bool, inl: bool, inr: bool) -> bool
 }
 
 impl<T: BaseFloat> ConstructiveSolidGeometry<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
     pub fn bounds(&self) -> Bounds<T> {
-        self.left.borrow().shape.bounds().unwrap() //TODO
+        todo!();
     }
 
     fn filter_intersections(&self, xs: &[Intersection<T>]) -> Vec<Intersection<T>> {
@@ -61,7 +50,7 @@ impl<T: BaseFloat> ConstructiveSolidGeometry<T> {
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         let mut v = self.left.borrow().shape.intersect(ray);
         v.append(&mut self.right.borrow().shape.intersect(ray));
-        v.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less));
+        v.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Less));
         self.filter_intersections(&v)
     }
 }
@@ -71,7 +60,7 @@ mod tests {
     use cgmath::SquareMatrix;
 
     use super::*;
-    use crate::shape::{get_link, Cube, Sphere};
+    use crate::shape::{get_link, Cube, Shape, Sphere};
     use cgmath::{Point3, Vector3};
 
     fn filter_intersections() {

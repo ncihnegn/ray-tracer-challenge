@@ -4,10 +4,8 @@ use crate::{
     shape::{reflect, Shape},
 };
 use cgmath::{dot, BaseFloat};
-use derive_more::Constructor;
-use std::cmp::Ordering::Less;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Intersection<T> {
     pub t: T,
     pub object: Shape<T>,
@@ -61,7 +59,7 @@ impl<T: BaseFloat> Intersection<T> {
 pub fn hit<T: BaseFloat>(v: &[Intersection<T>]) -> Option<Intersection<T>> {
     v.iter()
         .filter(|i| i.t >= T::from(f32::EPSILON).unwrap()) // -0.0 >= T::zero()
-        .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less))
+        .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Less))
         .cloned()
 }
 

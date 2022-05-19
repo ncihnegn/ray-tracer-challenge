@@ -1,14 +1,12 @@
-use crate::impl_approx;
 use cgmath::{AbsDiffEq, BaseFloat, Matrix4, Point3, RelativeEq, UlpsEq, Vector3};
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vector3<T>,
 }
 
-impl_approx!(Ray=> Point3<T> Vector3<T> => origin direction);
+crate::impl_approx!(Ray=> Point3<T> Vector3<T> => origin direction);
 
 impl<T: BaseFloat> Ray<T> {
     // Find the position after time.

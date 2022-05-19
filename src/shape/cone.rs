@@ -2,10 +2,9 @@ use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
 use cgmath::{abs_diff_eq, abs_diff_ne, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
-use derive_more::Constructor;
 use std::{cmp::Ordering::Less, fmt::Debug};
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Cone<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -48,14 +47,6 @@ impl<T: BaseFloat> Cone<T> {
 }
 
 impl<T: BaseFloat + Debug> Cone<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
-
     pub fn bounds(&self) -> Bounds<T> {
         let one = T::one();
         let max = Point3::new(

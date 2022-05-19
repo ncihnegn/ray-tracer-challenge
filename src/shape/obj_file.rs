@@ -1,9 +1,13 @@
 use crate::{
     material::Material,
-    shape::{get_link, group::push, Group, Shape, ShapeLink, SmoothTriangle, Triangle},
+    shape::{
+        get_link,
+        group::{push, push_link},
+        Group, Shape, ShapeLink, SmoothTriangle, Triangle,
+    },
 };
 use cgmath::{BaseFloat, Point3, Vector3};
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, rc::Rc, str::FromStr};
 
 pub struct Parser<T> {
     groups: HashMap<String, ShapeLink<T>>,
@@ -94,15 +98,14 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
         }
     }
 
-    pub fn obj_to_group(self) -> ShapeLink<T> {
+    pub fn obj_to_group(self) -> Shape<T> {
         let top_group = get_link(Shape::Group(Group::default()));
         for (_, group) in self.groups {
-            let shape = group.borrow().shape.clone();
-            if !shape.as_group().unwrap().children.is_empty() {
-                push(&top_group, shape);
+            if !group.borrow().shape.as_group().unwrap().children.is_empty() {
+                push_link(&top_group, group);
             }
         }
-        top_group
+        Rc::try_unwrap(top_group).unwrap().into_inner().shape
     }
 }
 

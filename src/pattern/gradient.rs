@@ -1,9 +1,8 @@
 use crate::pattern::TraitPattern;
 use cgmath::{BaseFloat, Matrix4, Point3};
-use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Gradient<T> {
     a: RGB<T>,
     b: RGB<T>,

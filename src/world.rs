@@ -8,10 +8,11 @@ use crate::{
     shape::{sphere::Sphere, Shape},
 };
 use cgmath::{BaseFloat, InnerSpace, Matrix4, Point3, SquareMatrix};
-use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Constructor, Debug)]
+const RECURSION_LIMIT: u8 = 5;
+
+#[derive(derive_more::Constructor, Debug)]
 pub struct World<T> {
     pub light: Light<T>,
     pub objects: Vec<Shape<T>>,
@@ -43,7 +44,7 @@ impl<T: BaseFloat + Default> Default for World<T> {
                     Material::default(),
                 )),
             ],
-            recursion: 5,
+            recursion: RECURSION_LIMIT,
         }
     }
 }
@@ -70,12 +71,15 @@ impl<T: BaseFloat + Default> World<T> {
     }
 
     fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        self.objects
+        let mut xs = self
+            .objects
             .iter()
             .map(|s| s.intersect(ray))
             .into_iter()
             .flatten()
-            .collect()
+            .collect::<Vec<_>>();
+        xs.sort_by(|i1, i2| i1.t.partial_cmp(&i2.t).unwrap_or(std::cmp::Ordering::Less));
+        xs
     }
 
     pub fn color_at(&mut self, ray: Ray<T>) -> RGB<T> {
@@ -104,7 +108,7 @@ impl<T: BaseFloat + Default> World<T> {
         let r = comps.object.material().unwrap().reflective;
         if self.recursion == 0 || r == T::zero() {
             // Terminate the calling loop
-            self.recursion = 5;
+            self.recursion = RECURSION_LIMIT;
             RGB::default()
         } else {
             let reflect_ray = Ray::new(comps.over_point(), comps.reflectv);
@@ -117,7 +121,7 @@ impl<T: BaseFloat + Default> World<T> {
     fn refracted_color(&mut self, comps: &Computation<T>) -> RGB<T> {
         let material = comps.object.material().unwrap();
         if self.recursion == 0 || material.transparency == T::zero() {
-            self.recursion = 5;
+            self.recursion = RECURSION_LIMIT;
             RGB::default()
         } else {
             let one = T::one();

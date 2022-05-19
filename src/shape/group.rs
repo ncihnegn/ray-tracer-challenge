@@ -6,10 +6,9 @@ use crate::{
     shape::{get_link_with_parent, Shape, ShapeLink},
 };
 use cgmath::{BaseFloat, Matrix4, SquareMatrix};
-use derive_more::Constructor;
-use std::{cmp::Ordering::Less, fmt::Debug};
+use std::{cmp::Ordering::Less, fmt::Debug, rc::Rc};
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Group<T> {
     pub transform: Matrix4<T>,
     pub children: Vec<ShapeLink<T>>,
@@ -17,6 +16,17 @@ pub struct Group<T> {
 
 pub fn push<T>(parent: &ShapeLink<T>, shape: Shape<T>) {
     let child = get_link_with_parent(shape, parent);
+    parent
+        .borrow_mut()
+        .shape
+        .as_group_mut()
+        .unwrap()
+        .children
+        .push(child);
+}
+
+pub fn push_link<T>(parent: &ShapeLink<T>, child: ShapeLink<T>) {
+    child.borrow_mut().parent = Some(Rc::downgrade(parent));
     parent
         .borrow_mut()
         .shape
@@ -36,13 +46,6 @@ impl<T: BaseFloat + Default> Default for Group<T> {
 }
 
 impl<T: BaseFloat + Debug> Group<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
-    pub fn material(&self) -> Option<Material<T>> {
-        None
-    }
     pub fn bounds(&self) -> Option<Bounds<T>> {
         Bounds::from_all_points(
             &self
@@ -74,11 +77,11 @@ impl<T: BaseFloat + Debug> Group<T> {
 
 mod tests {
     use super::*;
-    use crate::shape::{get_link, ShapeWrapper, Sphere};
-    use cgmath::{assert_relative_eq, EuclideanSpace, Point3, Rad, Vector3, Zero};
+    use crate::shape::{get_link, Cylinder, ShapeWrapper, Sphere};
+    use cgmath::{assert_relative_eq, EuclideanSpace, Matrix4, Point3, Rad, Vector3};
     use std::{
         cell::RefCell,
-        f32::consts::{FRAC_PI_2, PI, SQRT_2},
+        f32::consts::{FRAC_PI_2, FRAC_PI_3, FRAC_PI_6, SQRT_2},
         rc::Rc,
     };
 
@@ -148,6 +151,63 @@ mod tests {
                 2
             );
         }
+    }
+
+    #[test]
+    fn hexagon_test() {
+        {
+            let mut hex = hexagon(None);
+            hex.as_group_mut().unwrap().transform = Matrix4::from_angle_x(Rad(FRAC_PI_3))
+                * Matrix4::from_translation(Vector3::unit_y() * 0.75);
+            assert_eq!(
+                hex.intersect(Ray::new(
+                    Point3::new(0., 1.5, -5.),
+                    Vector3::new(-0.19, -0.1, 0.98)
+                ))
+                .len(),
+                4
+            );
+        }
+    }
+
+    fn hexagon_corner<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
+        let quarter = T::from(0.25).unwrap();
+        Shape::Sphere(Sphere::new(
+            Matrix4::from_translation(-Vector3::unit_z()) * Matrix4::from_scale(quarter),
+            material.unwrap_or_default(),
+        ))
+    }
+
+    fn hexagon_edge<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
+        let quarter = T::from(0.25).unwrap();
+        Shape::Cylinder(Cylinder::new(
+            Matrix4::from_translation(-Vector3::unit_z())
+                * Matrix4::from_angle_y(Rad(T::from(-FRAC_PI_6).unwrap()))
+                * Matrix4::from_angle_z(Rad(T::from(-FRAC_PI_2).unwrap()))
+                * Matrix4::from_nonuniform_scale(quarter, T::one(), quarter),
+            material.unwrap_or_default(),
+            T::zero(),
+            T::one(),
+            false,
+        ))
+    }
+
+    fn hexagon_side<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
+        let rc = get_link(Shape::Group(Group::default()));
+        push(&rc, hexagon_corner(material));
+        push(&rc, hexagon_edge(material));
+        Rc::try_unwrap(rc).unwrap().into_inner().shape
+    }
+
+    fn hexagon<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
+        let rc = get_link(Shape::Group(Group::default()));
+        for i in 0..6 {
+            let mut side = hexagon_side(material);
+            side.as_group_mut().unwrap().transform =
+                Matrix4::from_angle_y(Rad(T::from(i as u8).unwrap() * T::from(FRAC_PI_3).unwrap()));
+            push(&rc, side);
+        }
+        Rc::try_unwrap(rc).unwrap().into_inner().shape
     }
 
     #[test]

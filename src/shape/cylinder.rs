@@ -2,10 +2,8 @@ use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
 use cgmath::{abs_diff_eq, abs_diff_ne, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
-use derive_more::Constructor;
-use std::cmp::Ordering::Less;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Cylinder<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -48,13 +46,6 @@ impl<T: BaseFloat> Cylinder<T> {
 }
 
 impl<T: BaseFloat> Cylinder<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
     pub fn bounds(&self) -> Bounds<T> {
         let one = T::one();
         let max = Point3::new(
@@ -102,7 +93,7 @@ impl<T: BaseFloat> Cylinder<T> {
                     xs.push(Intersection::new(t1, Shape::Cylinder(self.clone()), None));
                 }
                 xs.append(&mut self.intersect_caps(ray));
-                xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(Less));
+                xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Less));
                 xs
             }
         }

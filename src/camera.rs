@@ -1,10 +1,8 @@
 use crate::{canvas::Canvas, ray::Ray, world::World};
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix};
-use derive_more::Constructor;
 use rgb::RGB;
-use std::fmt::Display;
 
-#[derive(Constructor)]
+#[derive(derive_more::Constructor)]
 pub struct Camera<T> {
     pub hsize: usize,
     pub vsize: usize,
@@ -15,7 +13,7 @@ pub struct Camera<T> {
     pub pixel_size: T,
 }
 
-impl<T: BaseFloat + Default + Display> Camera<T> {
+impl<T: BaseFloat + Default + std::fmt::Display> Camera<T> {
     pub fn from(hsize: usize, vsize: usize, field_of_view: T) -> Camera<T> {
         let two = T::from(2).unwrap();
         let half_view = (field_of_view / two).tan();

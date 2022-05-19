@@ -1,9 +1,8 @@
 use crate::{light::Light, pattern::Pattern, shape::reflect};
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
-use derive_more::Constructor;
 use rgb::RGB;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Material<T> {
     pub pattern: Pattern<T>,
     pub ambient: T,

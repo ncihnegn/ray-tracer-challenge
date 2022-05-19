@@ -20,11 +20,7 @@ use crate::{
         sphere::Sphere, triangle::Triangle,
     },
 };
-use cgmath::{
-    BaseFloat, EuclideanSpace, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3,
-};
-use derivative::Derivative;
-use derive_more::Constructor;
+use cgmath::{BaseFloat, InnerSpace, Matrix, Matrix4, Point3, SquareMatrix, Vector3};
 use enum_as_inner::EnumAsInner;
 use std::{
     cell::RefCell,
@@ -45,31 +41,77 @@ pub enum Shape<T> {
 }
 
 impl<T: BaseFloat> Shape<T> {
+    pub fn apply_transform(&self, transform: Matrix4<T>) -> Shape<T> {
+        match self {
+            Shape::Cone(c) => {
+                let mut s = c.clone();
+                s.transform = s.transform * transform;
+                Shape::Cone(s)
+            }
+            Shape::ConstructiveSolidGeometry(c) => {
+                let mut s = c.clone();
+                s.transform = s.transform * transform;
+                Shape::ConstructiveSolidGeometry(s)
+            }
+            Shape::Cube(c) => {
+                let mut s = c.clone();
+                s.transform = s.transform * transform;
+                Shape::Cube(s)
+            }
+            Shape::Cylinder(c) => {
+                let mut s = c.clone();
+                s.transform = s.transform * transform;
+                Shape::Cylinder(s)
+            }
+            Shape::Group(g) => {
+                let mut s = g.clone();
+                s.transform = s.transform * transform;
+                Shape::Group(s)
+            }
+            Shape::Plane(p) => {
+                let mut s = p.clone();
+                s.transform = s.transform * transform;
+                Shape::Plane(s)
+            }
+            Shape::SmoothTriangle(_) => todo!(),
+            Shape::Sphere(sp) => {
+                let mut s = sp.clone();
+                s.transform = s.transform * transform;
+                Shape::Sphere(s)
+            }
+            Shape::Triangle(t) => {
+                let mut s = t.clone();
+                s.transform = s.transform * transform;
+                Shape::Triangle(s)
+            }
+        }
+    }
+
     pub fn transform(&self) -> Matrix4<T> {
         match self {
-            Shape::Cone(c) => c.transform(),
-            Shape::ConstructiveSolidGeometry(c) => c.transform(),
-            Shape::Cube(c) => c.transform(),
-            Shape::Cylinder(c) => c.transform(),
-            Shape::Group(g) => g.transform(),
-            Shape::Plane(p) => p.transform(),
-            Shape::SmoothTriangle(s) => s.transform(),
-            Shape::Sphere(s) => s.transform(),
-            Shape::Triangle(t) => t.transform(),
+            Shape::Cone(c) => c.transform,
+            Shape::ConstructiveSolidGeometry(c) => c.transform,
+            Shape::Cube(c) => c.transform,
+            Shape::Cylinder(c) => c.transform,
+            Shape::Group(g) => g.transform,
+            Shape::Plane(p) => p.transform,
+            Shape::SmoothTriangle(_) => Matrix4::identity(),
+            Shape::Sphere(s) => s.transform,
+            Shape::Triangle(t) => t.transform,
         }
     }
 
     pub fn material(&self) -> Option<Material<T>> {
         match self {
-            Shape::Cone(c) => Some(c.material()),
+            Shape::Cone(c) => Some(c.material),
             Shape::ConstructiveSolidGeometry(_) => None,
-            Shape::Cube(c) => Some(c.material()),
-            Shape::Cylinder(c) => Some(c.material()),
+            Shape::Cube(c) => Some(c.material),
+            Shape::Cylinder(c) => Some(c.material),
             Shape::Group(_) => None,
-            Shape::Plane(p) => Some(p.material()),
-            Shape::SmoothTriangle(s) => Some(s.material()),
-            Shape::Sphere(s) => Some(s.material()),
-            Shape::Triangle(t) => Some(t.material()),
+            Shape::Plane(p) => Some(p.material),
+            Shape::SmoothTriangle(s) => Some(s.material),
+            Shape::Sphere(s) => Some(s.material),
+            Shape::Triangle(t) => Some(t.material),
         }
     }
 
@@ -112,23 +154,20 @@ impl<T: BaseFloat> Shape<T> {
         }
     }
 
-    fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        match self {
-            Shape::Cone(c) => c.local_intersect(ray),
-            Shape::ConstructiveSolidGeometry(c) => c.local_intersect(ray),
-            Shape::Cube(c) => c.local_intersect(ray),
-            Shape::Cylinder(c) => c.local_intersect(ray),
-            Shape::Group(g) => g.local_intersect(ray),
-            Shape::Plane(p) => p.local_intersect(ray),
-            Shape::SmoothTriangle(s) => s.local_intersect(ray),
-            Shape::Sphere(s) => s.local_intersect(ray),
-            Shape::Triangle(t) => t.local_intersect(ray),
-        }
-    }
-
     pub fn intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
         if let Some(i) = self.transform().invert() {
-            self.local_intersect(ray.transform(i))
+            let r = ray.transform(i);
+            match self {
+                Shape::Cone(c) => c.local_intersect(r),
+                Shape::ConstructiveSolidGeometry(c) => c.local_intersect(r),
+                Shape::Cube(c) => c.local_intersect(r),
+                Shape::Cylinder(c) => c.local_intersect(r),
+                Shape::Group(g) => g.local_intersect(r),
+                Shape::Plane(p) => p.local_intersect(r),
+                Shape::SmoothTriangle(s) => s.local_intersect(r),
+                Shape::Sphere(s) => s.local_intersect(r),
+                Shape::Triangle(t) => t.local_intersect(r),
+            }
         } else {
             Vec::new()
         }
@@ -150,7 +189,7 @@ pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
     v - normal * T::from(2).unwrap() * v.dot(normal)
 }
 
-#[derive(Clone, Constructor, Debug, Derivative)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
 #[derivative(PartialEq)]
 pub struct ShapeWrapper<T> {
     pub shape: Shape<T>,
@@ -205,7 +244,7 @@ impl<T: BaseFloat> ShapeWrapper<T> {
 
 mod tests {
     use super::*;
-    use cgmath::{assert_relative_eq, Rad};
+    use cgmath::{assert_relative_eq, EuclideanSpace, Rad};
     use std::f32::consts::{FRAC_1_SQRT_2, PI};
 
     #[test]

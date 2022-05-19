@@ -2,9 +2,8 @@ use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
 use cgmath::{BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3};
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Sphere<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -20,14 +19,6 @@ impl<T: BaseFloat + Default> Default for Sphere<T> {
 }
 
 impl<T: BaseFloat> Sphere<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
-
     pub fn bounds(&self) -> Bounds<T> {
         let one = T::one();
         let max = Point3::new(one, one, one);

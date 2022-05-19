@@ -2,9 +2,8 @@ use crate::{
     bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
 };
 use cgmath::{abs_diff_eq, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Plane<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -20,14 +19,6 @@ impl<T: BaseFloat + Default> Default for Plane<T> {
 }
 
 impl<T: BaseFloat> Plane<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
-
     pub fn bounds(&self) -> Bounds<T> {
         let max = Point3::new(T::max_value(), T::zero(), T::max_value());
         let min = Point3::new(T::min_value(), T::zero(), T::min_value());

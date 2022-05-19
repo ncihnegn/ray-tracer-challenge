@@ -1,9 +1,8 @@
 use crate::ray::Ray;
-use cgmath::{BaseFloat, EuclideanSpace, Matrix4, Point3};
-use derive_more::Constructor;
+use cgmath::{BaseFloat, Matrix4, Point3};
 use std::cmp::Ordering::Less;
 
-#[derive(Clone, Constructor, Copy, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug, PartialEq)]
 pub struct Bounds<T> {
     pub minimum: Point3<T>,
     pub maximum: Point3<T>,

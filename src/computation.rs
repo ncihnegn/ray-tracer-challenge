@@ -1,8 +1,7 @@
 use crate::shape::Shape;
 use cgmath::{BaseFloat, InnerSpace, Point3, Vector3};
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Computation<T> {
     pub t: T,
     pub object: Shape<T>,

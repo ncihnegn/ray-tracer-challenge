@@ -4,9 +4,8 @@ use crate::{
 use cgmath::{
     abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };
-use derive_more::Constructor;
 
-#[derive(Clone, Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
 pub struct Triangle<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -41,13 +40,6 @@ impl<T: BaseFloat> Triangle<T> {
 }
 
 impl<T: BaseFloat> Triangle<T> {
-    pub fn transform(&self) -> Matrix4<T> {
-        self.transform
-    }
-    pub fn material(&self) -> Material<T> {
-        self.material
-    }
-
     pub fn bounds(&self) -> Bounds<T> {
         Bounds::from_all_points(&[self.p1, self.p2, self.p3]).unwrap()
     }

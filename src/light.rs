@@ -1,9 +1,5 @@
-use cgmath::Point3;
-use derive_more::Constructor;
-use rgb::RGB;
-
-#[derive(Clone, Constructor, Copy, Debug)]
+#[derive(Clone, derive_more::Constructor, Copy, Debug)]
 pub struct Light<T> {
-    pub position: Point3<T>,
-    pub intensity: RGB<T>,
+    pub position: cgmath::Point3<T>,
+    pub intensity: rgb::RGB<T>,
 }
