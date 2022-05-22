@@ -2,7 +2,7 @@ use crate::{
     bounds::Bounds,
     intersection::Intersection,
     ray::Ray,
-    shape::{ShapeLink, ShapeWeak},
+    shape::{ShapeRc, ShapeWeak},
 };
 use cgmath::{BaseFloat, Matrix4};
 
@@ -18,8 +18,8 @@ pub enum Operation {
 pub struct ConstructiveSolidGeometry<T> {
     pub transform: Matrix4<T>,
     pub op: Operation,
-    pub left: ShapeLink<T>,
-    pub right: ShapeLink<T>,
+    pub left: ShapeRc<T>,
+    pub right: ShapeRc<T>,
     #[derivative(PartialEq = "ignore")]
     pub parent: Option<ShapeWeak<T>>,
 }
@@ -42,7 +42,7 @@ impl<T: BaseFloat> ConstructiveSolidGeometry<T> {
         let mut inr = false;
         let mut result = Vec::new();
         for i in xs {
-            let lhit = self.left.borrow().shape.include(&i.object);
+            let lhit = self.left.borrow().include(&i.object);
             if intersection_allowed(self.op, lhit, inl, inr) {
                 result.push(i.clone());
             }
@@ -56,8 +56,8 @@ impl<T: BaseFloat> ConstructiveSolidGeometry<T> {
     }
 
     pub fn local_intersect(&self, ray: Ray<T>) -> Vec<Intersection<T>> {
-        let mut v = self.left.borrow().shape.intersect(ray);
-        v.append(&mut self.right.borrow().shape.intersect(ray));
+        let mut v = self.left.borrow().intersect(ray);
+        v.append(&mut self.right.borrow().intersect(ray));
         v.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Less));
         self.filter_intersections(&v)
     }
@@ -68,7 +68,7 @@ mod tests {
     use cgmath::SquareMatrix;
 
     use super::*;
-    use crate::shape::{get_link, Cube, Shape, Sphere};
+    use crate::shape::{get_rc, Cube, Shape, Sphere};
     use cgmath::{Point3, Vector3};
 
     fn filter_intersections() {
@@ -82,8 +82,8 @@ mod tests {
             let c = ConstructiveSolidGeometry::new(
                 Matrix4::identity(),
                 op,
-                get_link(sphere.clone()),
-                get_link(cube.clone()),
+                get_rc(sphere.clone()),
+                get_rc(cube.clone()),
                 None,
             );
             let xs = vec![
@@ -106,8 +106,8 @@ mod tests {
             let c = ConstructiveSolidGeometry::new(
                 Matrix4::identity(),
                 Operation::Union,
-                get_link(sphere.clone()),
-                get_link(cube.clone()),
+                get_rc(sphere.clone()),
+                get_rc(cube.clone()),
                 None,
             );
             let ray = Ray::new(Point3::new(0., 2., -5.), Vector3::unit_z());
@@ -122,8 +122,8 @@ mod tests {
             let c = ConstructiveSolidGeometry::new(
                 Matrix4::identity(),
                 Operation::Union,
-                get_link(s1.clone()),
-                get_link(s2.clone()),
+                get_rc(s1.clone()),
+                get_rc(s2.clone()),
                 None,
             );
             let ray = Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z());

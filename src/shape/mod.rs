@@ -40,53 +40,37 @@ pub enum Shape<T> {
     Triangle(Triangle<T>),
 }
 
-impl<T: BaseFloat> Shape<T> {
-    pub fn apply_transform(&self, transform: Matrix4<T>) -> Shape<T> {
+impl<T> Shape<T> {
+    pub fn parent(&self) -> Option<ShapeWeak<T>> {
         match self {
-            Shape::Cone(c) => {
-                let mut s = c.clone();
-                s.transform = s.transform * transform;
-                Shape::Cone(s)
-            }
-            Shape::ConstructiveSolidGeometry(c) => {
-                let mut s = c.clone();
-                s.transform = s.transform * transform;
-                Shape::ConstructiveSolidGeometry(s)
-            }
-            Shape::Cube(c) => {
-                let mut s = c.clone();
-                s.transform = s.transform * transform;
-                Shape::Cube(s)
-            }
-            Shape::Cylinder(c) => {
-                let mut s = c.clone();
-                s.transform = s.transform * transform;
-                Shape::Cylinder(s)
-            }
-            Shape::Group(g) => {
-                let mut s = g.clone();
-                s.transform = s.transform * transform;
-                Shape::Group(s)
-            }
-            Shape::Plane(p) => {
-                let mut s = p.clone();
-                s.transform = s.transform * transform;
-                Shape::Plane(s)
-            }
-            Shape::SmoothTriangle(_) => todo!(),
-            Shape::Sphere(sp) => {
-                let mut s = sp.clone();
-                s.transform = s.transform * transform;
-                Shape::Sphere(s)
-            }
-            Shape::Triangle(t) => {
-                let mut s = t.clone();
-                s.transform = s.transform * transform;
-                Shape::Triangle(s)
-            }
+            Shape::Cone(c) => c.parent.clone(),
+            Shape::ConstructiveSolidGeometry(c) => c.parent.clone(),
+            Shape::Cube(c) => c.parent.clone(),
+            Shape::Cylinder(c) => c.parent.clone(),
+            Shape::Group(g) => g.parent.clone(),
+            Shape::Plane(p) => p.parent.clone(),
+            Shape::SmoothTriangle(s) => s.parent.clone(),
+            Shape::Sphere(s) => s.parent.clone(),
+            Shape::Triangle(t) => t.parent.clone(),
         }
     }
 
+    pub fn set_parent(&mut self, parent: Option<ShapeWeak<T>>) {
+        match self {
+            Shape::Cone(c) => c.parent = parent,
+            Shape::ConstructiveSolidGeometry(c) => c.parent = parent,
+            Shape::Cube(c) => c.parent = parent,
+            Shape::Cylinder(c) => c.parent = parent,
+            Shape::Group(g) => g.parent = parent,
+            Shape::Plane(p) => p.parent = parent,
+            Shape::SmoothTriangle(s) => s.parent = parent,
+            Shape::Sphere(s) => s.parent = parent,
+            Shape::Triangle(t) => t.parent = parent,
+        }
+    }
+}
+
+impl<T: BaseFloat> Shape<T> {
     pub fn transform(&self) -> Matrix4<T> {
         match self {
             Shape::Cone(c) => c.transform,
@@ -128,11 +112,12 @@ impl<T: BaseFloat> Shape<T> {
             Shape::Triangle(t) => Some(t.bounds()),
         }
     }
+
     pub fn include(&self, other: &Shape<T>) -> bool {
         match self {
-            Shape::Group(g) => g.children.iter().any(|c| c.borrow().shape.include(other)),
+            Shape::Group(g) => g.children.iter().any(|c| c.borrow().include(other)),
             Shape::ConstructiveSolidGeometry(c) => {
-                c.left.borrow().shape.include(other) || c.right.borrow().shape.include(other)
+                c.left.borrow().include(other) || c.right.borrow().include(other)
             }
             _ => self == other,
         }
@@ -173,15 +158,44 @@ impl<T: BaseFloat> Shape<T> {
         }
     }
 
-    pub fn normal_at(&self, point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
-        self.transform().invert().map(|i| {
-            (i.transpose()
-                * self
-                    .local_normal_at(Point3::from_homogeneous(i * point.to_homogeneous()), uv)
-                    .extend(T::zero()))
-            .truncate()
-            .normalize()
+    //pub fn normal_at(&self, point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
+    //    self.transform().invert().map(|i| {
+    //        (i.transpose()
+    //            * self
+    //                .local_normal_at(Point3::from_homogeneous(i * point.to_homogeneous()), uv)
+    //                .extend(T::zero()))
+    //        .truncate()
+    //        .normalize()
+    //    })
+    //}
+
+    pub fn world_to_object(&self, point: Point3<T>) -> Option<Point3<T>> {
+        let pp = Some(point);
+        let o = self.parent().as_ref().map_or(pp, |weak| {
+            weak.upgrade()
+                .map_or(pp, |rc| rc.borrow().world_to_object(point))
+        });
+        self.transform()
+            .invert()
+            .and_then(|i| o.map(|p| Point3::from_homogeneous(i * p.to_homogeneous())))
+    }
+
+    fn normal_to_world(&self, normal: Vector3<T>) -> Option<Vector3<T>> {
+        let ov = self.transform().invert().map(|i| {
+            (i.transpose() * normal.extend(T::zero()))
+                .truncate()
+                .normalize()
+        });
+        self.parent().as_ref().map_or(ov, |weak| {
+            weak.upgrade()
+                .map_or(ov, |rc| ov.and_then(|v| rc.borrow().normal_to_world(v)))
         })
+    }
+
+    pub fn normal_at(&self, world_point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
+        self.world_to_object(world_point)
+            .map(|local_point| self.local_normal_at(local_point, uv))
+            .map(|local_normal| self.normal_to_world(local_normal).unwrap())
     }
 }
 
@@ -191,57 +205,15 @@ pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
 
 pub type ShapeWeak<T> = Weak<RefCell<Shape<T>>>;
 
-#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
-#[derivative(PartialEq)]
-pub struct ShapeWrapper<T> {
-    pub shape: Shape<T>,
-    #[derivative(PartialEq = "ignore")]
-    pub parent: Option<Weak<RefCell<ShapeWrapper<T>>>>,
+pub type ShapeRc<T> = Rc<RefCell<Shape<T>>>;
+
+pub fn get_rc<T>(shape: Shape<T>) -> ShapeRc<T> {
+    Rc::new(RefCell::new(shape))
 }
 
-pub type ShapeLink<T> = Rc<RefCell<ShapeWrapper<T>>>;
-
-pub fn get_link<T>(shape: Shape<T>) -> ShapeLink<T> {
-    Rc::new(RefCell::new(ShapeWrapper::new(shape, None)))
-}
-
-pub fn get_link_with_parent<T>(shape: Shape<T>, parent: &ShapeLink<T>) -> ShapeLink<T> {
-    Rc::new(RefCell::new(ShapeWrapper::new(
-        shape,
-        Some(Rc::downgrade(parent)),
-    )))
-}
-
-impl<T: BaseFloat> ShapeWrapper<T> {
-    pub fn world_to_object(&self, point: Point3<T>) -> Option<Point3<T>> {
-        let pp = Some(point);
-        let o = self.parent.as_ref().map_or(pp, |weak| {
-            weak.upgrade()
-                .map_or(pp, |rc| rc.borrow().world_to_object(point))
-        });
-        self.shape
-            .transform()
-            .invert()
-            .and_then(|i| o.map(|p| Point3::from_homogeneous(i * p.to_homogeneous())))
-    }
-
-    fn normal_to_world(&self, normal: Vector3<T>) -> Option<Vector3<T>> {
-        let ov = self.shape.transform().invert().map(|i| {
-            (i.transpose() * normal.extend(T::zero()))
-                .truncate()
-                .normalize()
-        });
-        self.parent.as_ref().map_or(ov, |weak| {
-            weak.upgrade()
-                .map_or(ov, |rc| ov.and_then(|v| rc.borrow().normal_to_world(v)))
-        })
-    }
-
-    pub fn normal_at(&self, world_point: Point3<T>, uv: Option<(T, T)>) -> Option<Vector3<T>> {
-        self.world_to_object(world_point)
-            .map(|local_point| self.shape.local_normal_at(local_point, uv))
-            .map(|local_normal| self.normal_to_world(local_normal).unwrap())
-    }
+pub fn get_rc_with_parent<T>(mut shape: Shape<T>, parent: &ShapeRc<T>) -> ShapeRc<T> {
+    shape.set_parent(Some(Rc::downgrade(parent)));
+    Rc::new(RefCell::new(shape))
 }
 
 mod tests {

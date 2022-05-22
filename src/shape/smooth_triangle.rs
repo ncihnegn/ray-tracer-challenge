@@ -3,11 +3,12 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{Shape, Triangle},
+    shape::{Shape, ShapeWeak, Triangle},
 };
 use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct SmoothTriangle<T> {
     pub material: Material<T>,
     pub p1: Point3<T>,
@@ -16,6 +17,8 @@ pub struct SmoothTriangle<T> {
     pub n1: Vector3<T>,
     pub n2: Vector3<T>,
     pub n3: Vector3<T>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 impl<T: BaseFloat> SmoothTriangle<T> {
@@ -50,6 +53,7 @@ mod tests {
             Vector3::unit_y(),
             -Vector3::unit_x(),
             Vector3::unit_x(),
+            None,
         );
         let ray = Ray::new(Point3::new(-0.2, 0.3, -2.), Vector3::unit_z());
         let (u, v) = tri.local_intersect(ray)[0].uv.unwrap();
@@ -67,6 +71,7 @@ mod tests {
             Vector3::unit_y(),
             -Vector3::unit_x(),
             Vector3::unit_x(),
+            None,
         );
         assert_relative_eq!(
             Shape::SmoothTriangle(tri)
@@ -89,6 +94,7 @@ mod tests {
                 Vector3::unit_y(),
                 -Vector3::unit_x(),
                 Vector3::unit_x(),
+                None,
             )),
             Some((0.45, 0.25)),
         );

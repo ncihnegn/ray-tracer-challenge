@@ -1,16 +1,16 @@
 use crate::{
     material::Material,
     shape::{
-        get_link,
+        get_rc,
         group::{push, push_link},
-        Group, Shape, ShapeLink, SmoothTriangle, Triangle,
+        Group, Shape, ShapeRc, SmoothTriangle, Triangle,
     },
 };
 use cgmath::{BaseFloat, Point3, Vector3};
 use std::{collections::HashMap, rc::Rc, str::FromStr};
 
 pub struct Parser<T> {
-    groups: HashMap<String, ShapeLink<T>>,
+    groups: HashMap<String, ShapeRc<T>>,
     vertices: Vec<Point3<T>>,
     normals: Vec<Vector3<T>>,
 }
@@ -39,6 +39,7 @@ fn fan_tranigulation<T: BaseFloat + Default>(
                     normals[index[0][2].unwrap() - 1],
                     normals[v[2].unwrap() - 1],
                     normals[v[2].unwrap()],
+                    None,
                 ))
             }
         })
@@ -51,7 +52,7 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
         let mut normals = Vec::new();
         let group = Group::default();
         let mut groups = HashMap::new();
-        groups.insert("default".to_string(), get_link(Shape::Group(group)));
+        groups.insert("default".to_string(), get_rc(Shape::Group(group)));
         let mut current_label = "default";
         for l in s.lines() {
             let mut iter = l.split_whitespace();
@@ -71,7 +72,7 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
                 Some("g") => {
                     if let Some(label) = iter.next() {
                         let group = Group::default();
-                        groups.insert(label.to_string(), get_link(Shape::Group(group)));
+                        groups.insert(label.to_string(), get_rc(Shape::Group(group)));
                         current_label = label;
                     }
                 }
@@ -99,18 +100,19 @@ impl<T: BaseFloat + FromStr + Default> Parser<T> {
     }
 
     pub fn obj_to_group(self) -> Shape<T> {
-        let top_group = get_link(Shape::Group(Group::default()));
+        let top_group = get_rc(Shape::Group(Group::default()));
         for (_, group) in self.groups {
-            if !group.borrow().shape.as_group().unwrap().children.is_empty() {
+            if !group.borrow().as_group().unwrap().children.is_empty() {
                 push_link(&top_group, group);
             }
         }
-        Rc::try_unwrap(top_group).unwrap().into_inner().shape
+        Rc::try_unwrap(top_group).unwrap().into_inner()
     }
 }
 
 mod tests {
     use super::*;
+    use std::ops::Deref;
 
     #[test]
     fn parse_obj_file() {
@@ -162,13 +164,12 @@ mod tests {
                 .get("default")
                 .unwrap()
                 .borrow()
-                .shape
                 .as_group()
                 .unwrap()
                 .children
                 .clone();
             assert_eq!(
-                children[0].borrow().shape,
+                *children[0].borrow().deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(-1., 0., 0.),
@@ -176,7 +177,7 @@ mod tests {
                 ))
             );
             assert_eq!(
-                children[1].borrow().shape,
+                *children[1].borrow().deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(1., 0., 0.),
@@ -201,13 +202,12 @@ mod tests {
                 .get("default")
                 .unwrap()
                 .borrow()
-                .shape
                 .as_group()
                 .unwrap()
                 .children
                 .clone();
             assert_eq!(
-                children[0].borrow().shape,
+                *children[0].borrow().deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(-1., 0., 0.),
@@ -215,7 +215,7 @@ mod tests {
                 ))
             );
             assert_eq!(
-                children[1].borrow().shape,
+                *children[1].borrow().deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(1., 0., 0.),
@@ -223,7 +223,7 @@ mod tests {
                 ))
             );
             assert_eq!(
-                children[2].borrow().shape,
+                *children[2].borrow().deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(1., 1., 0.),
@@ -246,17 +246,16 @@ mod tests {
                 "#,
             );
             assert_eq!(
-                parser
+                *parser
                     .groups
                     .get("FirstGroup")
                     .unwrap()
                     .borrow()
-                    .shape
                     .as_group()
                     .unwrap()
                     .children[0]
                     .borrow()
-                    .shape,
+                    .deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(-1., 0., 0.),
@@ -264,17 +263,16 @@ mod tests {
                 ))
             );
             assert_eq!(
-                parser
+                *parser
                     .groups
                     .get("SecondGroup")
                     .unwrap()
                     .borrow()
-                    .shape
                     .as_group()
                     .unwrap()
                     .children[0]
                     .borrow()
-                    .shape,
+                    .deref(),
                 Shape::Triangle(Triangle::from(
                     Point3::new(-1., 1., 0.),
                     Point3::new(1., 0., 0.),
@@ -302,13 +300,12 @@ mod tests {
                 .get("default")
                 .unwrap()
                 .borrow()
-                .shape
                 .as_group()
                 .unwrap()
                 .children
                 .clone();
             assert_eq!(
-                children[0].borrow().shape,
+                *children[0].borrow().deref(),
                 Shape::SmoothTriangle(SmoothTriangle::new(
                     Material::default(),
                     Point3::new(0., 1., 0.),
@@ -317,6 +314,7 @@ mod tests {
                     Vector3::unit_y(),
                     -Vector3::unit_x(),
                     Vector3::unit_x(),
+                    None,
                 ))
             );
         }

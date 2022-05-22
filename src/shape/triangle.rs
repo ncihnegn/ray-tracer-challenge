@@ -1,11 +1,16 @@
 use crate::{
-    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+    bounds::Bounds,
+    intersection::Intersection,
+    material::Material,
+    ray::Ray,
+    shape::{Shape, ShapeWeak},
 };
 use cgmath::{
     abs_diff_ne, BaseFloat, EuclideanSpace, InnerSpace, Matrix4, Point3, SquareMatrix, Vector3,
 };
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct Triangle<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
@@ -15,6 +20,8 @@ pub struct Triangle<T> {
     pub e1: Vector3<T>,
     pub e2: Vector3<T>,
     pub normal: Vector3<T>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 impl<T: BaseFloat> Default for Triangle<T> {
@@ -35,6 +42,7 @@ impl<T: BaseFloat> Triangle<T> {
             e1,
             e2,
             normal: e2.cross(e1).normalize(),
+            parent: None,
         }
     }
 }

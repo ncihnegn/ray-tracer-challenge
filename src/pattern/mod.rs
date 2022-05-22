@@ -6,7 +6,7 @@ pub mod test;
 
 use crate::{
     pattern::{checker::Checker, gradient::Gradient, ring::Ring, stripe::Stripe, test::Test},
-    shape::{Shape, ShapeWrapper},
+    shape::Shape,
 };
 use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix};
 use rgb::RGB;
@@ -46,7 +46,7 @@ pub trait TraitPattern<T: BaseFloat> {
         self.at(pattern_point)
     }
 
-    fn at_shape_wrapper(&self, object: &ShapeWrapper<T>, world_point: Point3<T>) -> Option<RGB<T>> {
+    fn at_shape_wrapper(&self, object: &Shape<T>, world_point: Point3<T>) -> Option<RGB<T>> {
         object.world_to_object(world_point).map(|object_point| {
             let pattern_point = Point3::from_homogeneous(
                 self.transform().invert().unwrap() * object_point.to_homogeneous(),
