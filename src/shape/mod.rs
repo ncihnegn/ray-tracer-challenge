@@ -189,6 +189,8 @@ pub fn reflect<T: BaseFloat>(v: Vector3<T>, normal: Vector3<T>) -> Vector3<T> {
     v - normal * T::from(2).unwrap() * v.dot(normal)
 }
 
+pub type ShapeWeak<T> = Weak<RefCell<Shape<T>>>;
+
 #[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
 #[derivative(PartialEq)]
 pub struct ShapeWrapper<T> {
@@ -253,6 +255,7 @@ mod tests {
             Shape::Sphere(Sphere::new(
                 Matrix4::from_translation(Vector3::unit_y()),
                 Material::default(),
+                None,
             ))
             .normal_at(Point3::new(0., 1.70711, -0.70711), None)
             .unwrap(),
@@ -263,6 +266,7 @@ mod tests {
             Shape::Sphere(Sphere::new(
                 Matrix4::from_nonuniform_scale(1., 0.5, 1.) * Matrix4::from_angle_z(Rad(PI / 5.)),
                 Material::default(),
+                None,
             ))
             .normal_at(2.0_f32.sqrt().recip() * Point3::new(0., 1., -1.), None)
             .unwrap(),

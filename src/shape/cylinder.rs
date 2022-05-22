@@ -1,15 +1,22 @@
 use crate::{
-    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+    bounds::Bounds,
+    intersection::Intersection,
+    material::Material,
+    ray::Ray,
+    shape::{Shape, ShapeWeak},
 };
 use cgmath::{abs_diff_eq, abs_diff_ne, BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct Cylinder<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
     pub minimum: T,
     pub maximum: T,
     pub closed: bool,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 impl<T: BaseFloat + Default> Default for Cylinder<T> {
@@ -20,6 +27,7 @@ impl<T: BaseFloat + Default> Default for Cylinder<T> {
             minimum: T::min_value(),
             maximum: T::max_value(),
             closed: false,
+            parent: None,
         }
     }
 }

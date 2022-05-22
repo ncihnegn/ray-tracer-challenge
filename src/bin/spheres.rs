@@ -21,6 +21,7 @@ fn main() {
     let floor = Sphere::new(
         Matrix4::from_nonuniform_scale(10., 0.01, 10.),
         room_material,
+        None,
     );
 
     let left_wall = Sphere::new(
@@ -29,6 +30,7 @@ fn main() {
             * Matrix4::from_angle_x(Rad(FRAC_PI_2))
             * floor.transform,
         room_material,
+        None,
     );
 
     let right_wall = Sphere::new(
@@ -37,6 +39,7 @@ fn main() {
             * Matrix4::from_angle_x(Rad(FRAC_PI_2))
             * floor.transform,
         room_material,
+        None,
     );
 
     let mut sphere_material = Material::default();
@@ -46,18 +49,21 @@ fn main() {
     let mut middle = Sphere::new(
         Matrix4::from_translation(Vector3::new(-0.5, 1., 0.5)),
         sphere_material,
+        None,
     );
     middle.material.pattern = Pattern::Solid(RGB::new(0.1, 1., 0.5));
 
     let mut right = Sphere::new(
         Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5),
         sphere_material,
+        None,
     );
     right.material.pattern = Pattern::Solid(RGB::new(0.5, 1., 0.1));
 
     let mut left = Sphere::new(
         Matrix4::from_translation(Vector3::new(-1.5, 0.33, -0.75)) * Matrix4::from_scale(0.33),
         sphere_material,
+        None,
     );
     left.material.pattern = Pattern::Solid(RGB::new(1., 0.8, 0.1));
 

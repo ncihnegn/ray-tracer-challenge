@@ -1,4 +1,9 @@
-use crate::{bounds::Bounds, intersection::Intersection, ray::Ray, shape::ShapeLink};
+use crate::{
+    bounds::Bounds,
+    intersection::Intersection,
+    ray::Ray,
+    shape::{ShapeLink, ShapeWeak},
+};
 use cgmath::{BaseFloat, Matrix4};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -8,12 +13,15 @@ pub enum Operation {
     Difference,
 }
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct ConstructiveSolidGeometry<T> {
     pub transform: Matrix4<T>,
     pub op: Operation,
     pub left: ShapeLink<T>,
     pub right: ShapeLink<T>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 fn intersection_allowed(op: Operation, lhit: bool, inl: bool, inr: bool) -> bool {
@@ -76,6 +84,7 @@ mod tests {
                 op,
                 get_link(sphere.clone()),
                 get_link(cube.clone()),
+                None,
             );
             let xs = vec![
                 Intersection::new(1., sphere.clone(), None),
@@ -99,6 +108,7 @@ mod tests {
                 Operation::Union,
                 get_link(sphere.clone()),
                 get_link(cube.clone()),
+                None,
             );
             let ray = Ray::new(Point3::new(0., 2., -5.), Vector3::unit_z());
             assert_eq!(c.local_intersect(ray), vec![]);
@@ -114,6 +124,7 @@ mod tests {
                 Operation::Union,
                 get_link(s1.clone()),
                 get_link(s2.clone()),
+                None,
             );
             let ray = Ray::new(Point3::new(0., 0., -5.), Vector3::unit_z());
             assert_eq!(

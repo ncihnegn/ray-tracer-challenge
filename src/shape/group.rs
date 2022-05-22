@@ -3,15 +3,18 @@ use crate::{
     intersection::Intersection,
     material::Material,
     ray::Ray,
-    shape::{get_link_with_parent, Shape, ShapeLink},
+    shape::{get_link_with_parent, Shape, ShapeLink, ShapeWeak},
 };
 use cgmath::{BaseFloat, Matrix4, SquareMatrix};
 use std::{cmp::Ordering::Less, fmt::Debug, rc::Rc};
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct Group<T> {
     pub transform: Matrix4<T>,
     pub children: Vec<ShapeLink<T>>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 pub fn push<T>(parent: &ShapeLink<T>, shape: Shape<T>) {
@@ -41,6 +44,7 @@ impl<T: BaseFloat + Default> Default for Group<T> {
         Group::<T> {
             transform: Matrix4::identity(),
             children: Vec::new(),
+            parent: None,
         }
     }
 }
@@ -87,13 +91,14 @@ mod tests {
 
     #[test]
     fn bounds() {
-        let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
+        let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new(), None));
         let rc = get_link(shape);
         push(
             &rc,
             Shape::Sphere(Sphere::new(
                 Matrix4::from_translation(Vector3::unit_x() * 5.),
                 Material::default(),
+                None,
             )),
         );
     }
@@ -115,6 +120,7 @@ mod tests {
                 Shape::Sphere(Sphere::new(
                     Matrix4::from_translation(Vector3::unit_z() * -3.),
                     Material::default(),
+                    None,
                 )),
             );
             push(
@@ -122,6 +128,7 @@ mod tests {
                 Shape::Sphere(Sphere::new(
                     Matrix4::from_translation(Vector3::unit_x() * 5.),
                     Material::default(),
+                    None,
                 )),
             );
             let group = rc.borrow().shape.as_group().unwrap().clone();
@@ -134,13 +141,14 @@ mod tests {
             assert_eq!(xs[3].object, group.children[0].borrow().shape);
         }
         {
-            let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new()));
+            let shape = Shape::Group(Group::<f32>::new(Matrix4::from_scale(2.), Vec::new(), None));
             let rc = get_link(shape);
             push(
                 &rc,
                 Shape::Sphere(Sphere::new(
                     Matrix4::from_translation(Vector3::unit_x() * 5.),
                     Material::default(),
+                    None,
                 )),
             );
             assert_eq!(
@@ -154,77 +162,22 @@ mod tests {
     }
 
     #[test]
-    fn hexagon_test() {
-        {
-            let mut hex = hexagon(None);
-            hex.as_group_mut().unwrap().transform = Matrix4::from_angle_x(Rad(FRAC_PI_3))
-                * Matrix4::from_translation(Vector3::unit_y() * 0.75);
-            assert_eq!(
-                hex.intersect(Ray::new(
-                    Point3::new(0., 1.5, -5.),
-                    Vector3::new(-0.19, -0.1, 0.98)
-                ))
-                .len(),
-                4
-            );
-        }
-    }
-
-    fn hexagon_corner<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
-        let quarter = T::from(0.25).unwrap();
-        Shape::Sphere(Sphere::new(
-            Matrix4::from_translation(-Vector3::unit_z()) * Matrix4::from_scale(quarter),
-            material.unwrap_or_default(),
-        ))
-    }
-
-    fn hexagon_edge<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
-        let quarter = T::from(0.25).unwrap();
-        Shape::Cylinder(Cylinder::new(
-            Matrix4::from_translation(-Vector3::unit_z())
-                * Matrix4::from_angle_y(Rad(T::from(-FRAC_PI_6).unwrap()))
-                * Matrix4::from_angle_z(Rad(T::from(-FRAC_PI_2).unwrap()))
-                * Matrix4::from_nonuniform_scale(quarter, T::one(), quarter),
-            material.unwrap_or_default(),
-            T::zero(),
-            T::one(),
-            false,
-        ))
-    }
-
-    fn hexagon_side<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
-        let rc = get_link(Shape::Group(Group::default()));
-        push(&rc, hexagon_corner(material));
-        push(&rc, hexagon_edge(material));
-        Rc::try_unwrap(rc).unwrap().into_inner().shape
-    }
-
-    fn hexagon<T: BaseFloat + Default>(material: Option<Material<T>>) -> Shape<T> {
-        let rc = get_link(Shape::Group(Group::default()));
-        for i in 0..6 {
-            let mut side = hexagon_side(material);
-            side.as_group_mut().unwrap().transform =
-                Matrix4::from_angle_y(Rad(T::from(i as u8).unwrap() * T::from(FRAC_PI_3).unwrap()));
-            push(&rc, side);
-        }
-        Rc::try_unwrap(rc).unwrap().into_inner().shape
-    }
-
-    #[test]
     fn world_to_object() {
         let g1 = ShapeWrapper::new(
             Shape::Group(Group::new(
                 Matrix4::from_angle_y(Rad(FRAC_PI_2)),
                 Vec::new(),
+                None,
             )),
             None,
         );
-        let g2 = Shape::Group(Group::new(Matrix4::from_scale(2.), Vec::new()));
+        let g2 = Shape::Group(Group::new(Matrix4::from_scale(2.), Vec::new(), None));
         let r1 = Rc::new(RefCell::new(g1));
         push(&r1, g2);
         let shape = Shape::Sphere(Sphere::new(
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
+            None,
         ));
         let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
         push(&child, shape);
@@ -244,18 +197,21 @@ mod tests {
             Shape::Group(Group::new(
                 Matrix4::from_angle_y(Rad(FRAC_PI_2)),
                 Vec::new(),
+                None,
             )),
             None,
         );
         let g2 = Shape::Group(Group::new(
             Matrix4::from_nonuniform_scale(1., 2., 3.),
             Vec::new(),
+            None,
         ));
         let r1 = Rc::new(RefCell::new(g1));
         push(&r1, g2);
         let shape = Shape::Sphere(Sphere::new(
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
+            None,
         ));
         let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
         push(&child, shape);
@@ -276,18 +232,21 @@ mod tests {
             Shape::Group(Group::new(
                 Matrix4::from_angle_y(Rad(FRAC_PI_2)),
                 Vec::new(),
+                None,
             )),
             None,
         );
         let g2 = Shape::Group(Group::new(
             Matrix4::from_nonuniform_scale(1., 2., 3.),
             Vec::new(),
+            None,
         ));
         let r1 = Rc::new(RefCell::new(g1));
         push(&r1, g2);
         let shape = Shape::Sphere(Sphere::new(
             Matrix4::from_translation(Vector3::unit_x() * 5.),
             Material::default(),
+            None,
         ));
         let child = r1.borrow().shape.as_group().unwrap().children[0].clone();
         push(&child, shape);

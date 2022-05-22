@@ -1,12 +1,19 @@
 use crate::{
-    bounds::Bounds, intersection::Intersection, material::Material, ray::Ray, shape::Shape,
+    bounds::Bounds,
+    intersection::Intersection,
+    material::Material,
+    ray::Ray,
+    shape::{Shape, ShapeWeak},
 };
 use cgmath::{BaseFloat, Matrix4, Point3, SquareMatrix, Vector3};
 
-#[derive(Clone, derive_more::Constructor, Debug, PartialEq)]
+#[derive(Clone, derive_more::Constructor, Debug, derivative::Derivative)]
+#[derivative(PartialEq)]
 pub struct Cube<T> {
     pub transform: Matrix4<T>,
     pub material: Material<T>,
+    #[derivative(PartialEq = "ignore")]
+    pub parent: Option<ShapeWeak<T>>,
 }
 
 impl<T: BaseFloat + Default> Default for Cube<T> {
@@ -14,6 +21,7 @@ impl<T: BaseFloat + Default> Default for Cube<T> {
         Cube::<T> {
             transform: Matrix4::identity(),
             material: Material::default(),
+            parent: None,
         }
     }
 }

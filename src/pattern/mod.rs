@@ -87,7 +87,11 @@ mod tests {
         let white = RGB::new(1., 1., 1.);
         let black = RGB::new(0., 0., 0.);
         {
-            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let object = Shape::Sphere(Sphere::new(
+                Matrix4::from_scale(2.),
+                Material::default(),
+                None,
+            ));
             let pattern = Stripe::new(white, black, Matrix4::identity());
             assert_eq!(pattern.at_shape(object, Point3::new(1.5, 0., 0.)), white);
         }
@@ -97,7 +101,11 @@ mod tests {
             assert_eq!(pattern.at_shape(object, Point3::new(1.5, 0., 0.)), white);
         }
         {
-            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let object = Shape::Sphere(Sphere::new(
+                Matrix4::from_scale(2.),
+                Material::default(),
+                None,
+            ));
             let pattern = Stripe::new(
                 white,
                 black,
@@ -106,7 +114,11 @@ mod tests {
             assert_eq!(pattern.at_shape(object, Point3::new(2.5, 0., 0.)), white);
         }
         {
-            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let object = Shape::Sphere(Sphere::new(
+                Matrix4::from_scale(2.),
+                Material::default(),
+                None,
+            ));
             let pattern = Test::new(Matrix4::identity());
             assert_eq!(
                 pattern.at_shape(object, Point3::new(2., 3., 4.)),
@@ -114,7 +126,11 @@ mod tests {
             );
         }
         {
-            let object = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), Material::default()));
+            let object = Shape::Sphere(Sphere::new(
+                Matrix4::from_scale(2.),
+                Material::default(),
+                None,
+            ));
             let pattern = Test::new(Matrix4::from_translation(Vector3::new(0.5, 1., 1.5)));
             assert_eq!(
                 pattern.at_shape(object, Point3::new(2.5, 3., 3.5)),

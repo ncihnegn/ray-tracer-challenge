@@ -39,13 +39,6 @@ fn main() {
                     .material()
                     .unwrap()
                     .lighting(light, point, eye, normal, false);
-                if canvas.pixels[y][x] == RGB::new(1., 1., 1.) {
-                    println!(
-                        "y: {}, x: {}, point: {:?}, normal: {:?}, eye: {:?}",
-                        y, x, point, normal, eye
-                    );
-                    std::process::exit(1);
-                }
             }
         }
     }

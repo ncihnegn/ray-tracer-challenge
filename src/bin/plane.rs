@@ -18,7 +18,7 @@ fn main() {
     room_material.pattern = Pattern::Solid(RGB::new(1., 0.9, 0.9));
     room_material.specular = 0.;
 
-    let floor = Plane::new(Matrix4::identity(), room_material);
+    let floor = Plane::new(Matrix4::identity(), room_material, None);
 
     let mut sphere_material = Material::default();
     sphere_material.diffuse = 0.7;
@@ -27,18 +27,21 @@ fn main() {
     let mut middle = Sphere::new(
         Matrix4::from_translation(Vector3::new(-0.5, 1., 0.5)),
         sphere_material,
+        None,
     );
     middle.material.pattern = Pattern::Solid(RGB::new(0.1, 1., 0.5));
 
     let mut right = Sphere::new(
         Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5),
         sphere_material,
+        None,
     );
     right.material.pattern = Pattern::Solid(RGB::new(0.5, 1., 0.1));
 
     let mut left = Sphere::new(
         Matrix4::from_translation(Vector3::new(-1.5, 0.33, -0.75)) * Matrix4::from_scale(0.33),
         sphere_material,
+        None,
     );
     left.material.pattern = Pattern::Solid(RGB::new(1., 0.8, 0.1));
 

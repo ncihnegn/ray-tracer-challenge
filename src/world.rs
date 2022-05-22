@@ -38,10 +38,12 @@ impl<T: BaseFloat + Default> Default for World<T> {
                         T::zero(),
                         one,
                     ),
+                    None,
                 )),
                 Shape::Sphere(Sphere::new(
                     Matrix4::from_scale(T::from(0.5).unwrap()),
                     Material::default(),
+                    None,
                 )),
             ],
             recursion: RECURSION_LIMIT,

@@ -112,6 +112,7 @@ mod tests {
             let shape = Shape::Sphere(Sphere::new(
                 Matrix4::from_translation(vz),
                 Material::default(),
+                None,
             ));
             let i = Intersection::new(5., shape, None);
             let xs = vec![i.clone()];
@@ -151,11 +152,19 @@ mod tests {
             let mut material = Material::default();
             material.transparency = 1.;
             material.refractive_index = 1.5;
-            let a = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), material));
+            let a = Shape::Sphere(Sphere::new(Matrix4::from_scale(2.), material, None));
             material.refractive_index = 2.;
-            let b = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * -0.25), material));
+            let b = Shape::Sphere(Sphere::new(
+                Matrix4::from_translation(vz * -0.25),
+                material,
+                None,
+            ));
             material.refractive_index = 2.5;
-            let c = Shape::Sphere(Sphere::new(Matrix4::from_translation(vz * 0.25), material));
+            let c = Shape::Sphere(Sphere::new(
+                Matrix4::from_translation(vz * 0.25),
+                material,
+                None,
+            ));
             let r = Ray::new(Point3::from_vec(vz * -4.), vz);
             let xs = vec![
                 Intersection::new(2., a.clone(), None),
